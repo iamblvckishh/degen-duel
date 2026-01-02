@@ -133,15 +133,15 @@
         /* 50/50 Specifics */
         .power-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
             margin: 30px 0;
         }
 
         .power-btn {
             background: white;
             border: 6px solid black;
-            padding: 40px 10px;
+            padding: 20px 10px;
             text-align: center;
             box-shadow: var(--brutal-shadow);
             cursor: pointer;
@@ -187,6 +187,11 @@
             font-size: 1.2rem;
             outline: none;
             margin: 10px 0;
+            background: white;
+        }
+
+        .degen-input:focus {
+            background: var(--spice-yellow);
         }
 
         .label {
@@ -195,6 +200,12 @@
             padding: 4px 10px;
             font-size: 0.8rem;
             display: inline-block;
+        }
+
+        .custom-stake-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
     </style>
 </head>
@@ -207,24 +218,32 @@
     </header>
 
     <div class="nav-tabs">
-        <button class="tab active" onclick="switchTab('rps-view', this)">🪨 ROCK-PAPER-SCISSORS</button>
+        <button class="tab active" onclick="switchTab('rps-view', this)">🪨 ROCK-PAPER</button>
         <button class="tab" onclick="switchTab('flip-view', this)">🎲 50/50 DOUBLE</button>
     </div>
 
     <div id="rps-view" class="game-view active">
         <div class="card">
-            <span class="label">MATCHMAKING</span>
-            <h2 style="margin-top:10px;">SEARCH OPPONENT</h2>
-            <input type="text" class="degen-input" placeholder="ENTER USERNAME...">
+            <span class="label">SET THE STAGE</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 10px;">
+                <div>
+                    <p style="font-size: 0.8rem;">OPPONENT USERNAME</p>
+                    <input type="text" class="degen-input" id="rps-user" placeholder="SEARCH...">
+                </div>
+                <div>
+                    <p style="font-size: 0.8rem;">DUEL STAKE (USDC)</p>
+                    <input type="number" class="degen-input" id="rps-stake" placeholder="0.00" oninput="updatePotDisplay()">
+                </div>
+            </div>
             <div style="display:flex; gap:10px; margin-top:10px;">
-                <button style="background:var(--spice-blue); padding:5px 15px; border:2px solid black; cursor:pointer;">@Vitalik</button>
-                <button style="background:var(--spice-lime); padding:5px 15px; border:2px solid black; cursor:pointer;">@Anon_Deg3n</button>
+                <button onclick="document.getElementById('rps-user').value='Vitalik'" style="background:var(--spice-blue); padding:5px 15px; border:2px solid black; cursor:pointer;">@Vitalik</button>
+                <button onclick="document.getElementById('rps-user').value='Anon_Deg3n'" style="background:var(--spice-lime); padding:5px 15px; border:2px solid black; cursor:pointer;">@Anon_Deg3n</button>
             </div>
         </div>
 
         <div class="rps-arena">
-            <div style="grid-column: span 3; text-align: center; background: black; color: white; padding: 10px; margin-bottom: 10px;">
-                PRIZE POT: 190.00 USDC (5% FEE APPLIED)
+            <div id="rps-pot-display" style="grid-column: span 3; text-align: center; background: black; color: white; padding: 10px; margin-bottom: 10px;">
+                PRIZE POT: 0.00 USDC (5% FEE APPLIED)
             </div>
             <button class="choice-btn" onclick="playRPS('ROCK')">🪨</button>
             <button class="choice-btn" onclick="playRPS('PAPER')">📄</button>
@@ -239,13 +258,24 @@
             
             <div class="power-grid">
                 <div class="power-btn" style="color: black;" onclick="enterFlip(1)">
-                    <h2 style="font-size: 2.5rem;">$1</h2>
+                    <h2 style="font-size: 1.5rem;">$1</h2>
                 </div>
                 <div class="power-btn" style="color: black; background: var(--spice-yellow);" onclick="enterFlip(10)">
-                    <h2 style="font-size: 2.5rem;">$10</h2>
+                    <h2 style="font-size: 1.5rem;">$10</h2>
                 </div>
                 <div class="power-btn" style="color: black;" onclick="enterFlip(100)">
-                    <h2 style="font-size: 2.5rem;">$100</h2>
+                    <h2 style="font-size: 1.5rem;">$100</h2>
+                </div>
+                <div class="power-btn" style="color: black; background: var(--spice-blue);" onclick="enterFlip(1000)">
+                    <h2 style="font-size: 1.5rem;">$1K</h2>
+                </div>
+            </div>
+
+            <div class="card" style="background: white; color: black; box-shadow: var(--small-shadow); padding: 15px;">
+                <p style="font-size: 0.8rem; margin-bottom: 5px;">CUSTOM POWER OF 10</p>
+                <div class="custom-stake-box">
+                    <input type="number" id="custom-flip" class="degen-input" style="margin:0;" placeholder="10000...">
+                    <button onclick="handleCustomFlip()" style="background:var(--spice-lime); border:4px solid black; padding: 15px; font-weight: 900; cursor: pointer;">STAKE</button>
                 </div>
             </div>
         </div>
@@ -269,7 +299,6 @@
             <tbody>
                 <tr><td>50/50</td><td>@MoonBoY</td><td style="color:var(--spice-purple)">$19.00</td></tr>
                 <tr><td>RPS</td><td>@Chad_42</td><td style="color:var(--spice-purple)">$190.00</td></tr>
-                <tr><td>50/50</td><td>@Satoshi</td><td style="color:var(--spice-purple)">$1.90</td></tr>
             </tbody>
         </table>
     </div>
@@ -288,13 +317,43 @@
         list.style.display = list.style.display === 'block' ? 'none' : 'block';
     }
 
+    /* RPS LOGIC */
+    function updatePotDisplay() {
+        const stake = document.getElementById('rps-stake').value || 0;
+        const netPot = (stake * 2 * 0.95).toFixed(2);
+        document.getElementById('rps-pot-display').innerText = `PRIZE POT: ${netPot} USDC (5% FEE APPLIED)`;
+    }
+
     function playRPS(move) {
-        alert("STAKED! Waiting for opponent to counter your " + move);
+        const user = document.getElementById('rps-user').value;
+        const stake = document.getElementById('rps-stake').value;
+        if(!user || !stake || stake <= 0) {
+            alert("ENTER OPPONENT AND STAKE FIRST!");
+            return;
+        }
+        alert(`DUEL INITIATED vs ${user} for ${stake} USDC! Move Locked: ${move}`);
+    }
+
+    /* FLIP LOGIC */
+    function isPowerOfTen(n) {
+        if (n <= 0) return false;
+        let log = Math.log10(n);
+        return log === Math.floor(log);
+    }
+
+    function handleCustomFlip() {
+        const val = parseFloat(document.getElementById('custom-flip').value);
+        if(isPowerOfTen(val)) {
+            enterFlip(val);
+        } else {
+            alert("ERROR: YOU MUST ENTER A POWER OF 10 (1, 10, 100, 1000, 10000...)");
+        }
     }
 
     function enterFlip(amt) {
         document.getElementById('waiting-area').style.display = 'block';
         document.getElementById('wait-msg').innerText = "LOCKED $" + amt + ". WAITING FOR CHALLENGER...";
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
     function cancelFlip() {
