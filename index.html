@@ -31,7 +31,7 @@
         .power-btn { background: white; border: 6px solid black; padding: 20px 10px; text-align: center; box-shadow: var(--brutal-shadow); cursor: pointer; font-size: 1.5rem; }
         .degen-input { width: 100%; padding: 15px; border: 4px solid black; font-size: 1.2rem; outline: none; margin: 10px 0; }
         .label { background: black; color: white; padding: 4px 10px; font-size: 0.8rem; display: inline-block; }
-        #status-log { background: #eee; border: 4px solid black; padding: 10px; margin-top: 10px; font-family: monospace; font-size: 0.8rem; height: 80px; overflow-y: auto; color: #d00; }
+        #status-log { background: #eee; border: 4px solid black; padding: 10px; margin-top: 10px; font-family: monospace; font-size: 0.8rem; height: 80px; overflow-y: auto; color: black; }
         .confirm-btn { background: var(--main-black); color: white; width: 100%; padding: 15px; border: none; cursor: pointer; font-size: 1.2rem; margin-top: 10px; }
     </style>
 </head>
@@ -76,10 +76,11 @@
             </div>
         </div>
     </div>
-    <div id="status-log" style="color: black;">>> STATUS: READY. CONNECT WALLET.</div>
+    <div id="status-log">>> STATUS: READY. CONNECT WALLET.</div>
 </div>
 
 <script>
+    // --- CONFIG ---
     const CONTRACT_ADDRESS = "0x7e26bf8670Df62e454744767CBF71261a14F9175".toLowerCase(); 
     const USDC_ADDRESS = "0x3233306B70591f7d54402662054D69B0C39C9b5e".toLowerCase();
 
@@ -97,26 +98,26 @@
 
     async function handleAuth() {
         if (!window.ethereum) return alert("Install MetaMask!");
+        
         try {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            updateStatus(">> REQUESTING NETWORK SWITCH...");
             
-            // Check Network
-            const network = await provider.getNetwork();
-            if (network.chainId !== 11011) {
-                updateStatus(">> WRONG NETWORK. SWITCHING TO SHAPE SEPOLIA...");
-                await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                        chainId: '0x2b03',
-                        chainName: 'Shape Sepolia',
-                        rpcUrls: ['https://sepolia.shape.network'],
-                        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                        blockExplorerUrls: ['https://sepolia.shapescan.xyz']
-                    }]
-                });
-            }
+            // 1. Force network change first via window.ethereum directly
+            await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                    chainId: '0x2b03', // 11011
+                    chainName: 'Shape Sepolia',
+                    rpcUrls: ['https://sepolia.shape.network'],
+                    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                    blockExplorerUrls: ['https://sepolia.shapescan.xyz']
+                }]
+            });
 
+            // 2. NOW create the provider once the network is definitely changed
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
             await provider.send("eth_requestAccounts", []);
+            
             signer = provider.getSigner();
             const addr = await signer.getAddress();
             document.getElementById('auth-btn').innerText = addr.substring(0,6) + "...";
@@ -126,7 +127,10 @@
             
             const bal = await usdcContract.balanceOf(addr);
             updateStatus(">> CONNECTED. USDC: " + ethers.utils.formatUnits(bal, 6));
-        } catch (e) { updateStatus(">> AUTH FAILED: " + e.message); }
+        } catch (e) { 
+            console.error(e);
+            updateStatus(">> AUTH FAILED: REFRESH AND TRY AGAIN"); 
+        }
     }
 
     async function enterFlip(amount) {
@@ -139,27 +143,24 @@
             const allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
 
             if (allowance.lt(amountInUnits)) {
-                updateStatus(">> APPROVING USDC (1/2)...");
+                updateStatus(">> APPROVING USDC...");
                 const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
                 await txA.wait();
                 updateStatus(">> APPROVED! NOW STAKING...");
             }
 
-            updateStatus(">> SENDING STAKE (2/2)...");
+            updateStatus(">> SENDING STAKE...");
             const txS = await duelContract.enterFiftyFifty(amountInUnits, { gasLimit: 250000 });
             await txS.wait();
-            updateStatus(">> SUCCESS! MATCHING IN PROGRESS...");
-        } catch (e) { 
-            console.error(e);
-            updateStatus(">> ERROR: " + (e.reason || "TX REJECTED/BAL TOO LOW")); 
-        }
+            updateStatus(">> SUCCESS! MATCHING...");
+        } catch (e) { updateStatus(">> TX ERROR: " + (e.reason || "REJECTED")); }
     }
 
     async function playRPS(moveIndex) {
         if (!signer) return alert("Connect Wallet!");
         const opponent = document.getElementById('rps-user').value.trim().toLowerCase();
         const stakeAmount = document.getElementById('rps-stake').value;
-        if (!opponent || !stakeAmount) return alert("Set Opponent + Stake!");
+        if (!opponent || !stakeAmount) return alert("Fill fields!");
 
         try {
             const stakeInUnits = ethers.utils.parseUnits(stakeAmount.toString(), 6);
@@ -177,9 +178,8 @@
             updateStatus(">> CREATING RPS DUEL...");
             const tx = await duelContract.createRPSDuel(opponent, stakeInUnits, moveHash);
             await tx.wait();
-            updateStatus(">> DUEL CREATED. SALT: " + salt.substring(0,10) + "...");
-            console.log("FULL SALT:", salt);
-        } catch (e) { updateStatus(">> RPS ERROR: " + (e.reason || "TX FAILED")); }
+            updateStatus(">> DUEL CREATED. LOG SALT: " + salt.substring(0,10));
+        } catch (e) { updateStatus(">> RPS ERROR"); }
     }
 
     function switchTab(viewId, el) {
