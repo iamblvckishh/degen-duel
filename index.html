@@ -25,12 +25,13 @@
         .game-view { display: none; }
         .game-view.active { display: block; }
         .rps-arena { background: var(--spice-lime); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; padding: 30px; border: 6px solid black; margin-top: 20px; }
-        .choice-btn { background: white; border: 4px solid black; font-size: 4rem; padding: 20px; cursor: pointer; box-shadow: var(--small-shadow); }
+        .choice-btn { background: white; border: 4px solid black; font-size: 4rem; padding: 20px; cursor: pointer; box-shadow: var(--small-shadow); transition: 0.1s; }
+        .choice-btn:active { transform: translate(2px, 2px); box-shadow: none; }
         .power-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 30px 0; }
         .power-btn { background: white; border: 6px solid black; padding: 20px 10px; text-align: center; box-shadow: var(--brutal-shadow); cursor: pointer; font-size: 1.5rem; }
         .degen-input { width: 100%; padding: 15px; border: 4px solid black; font-size: 1.2rem; outline: none; margin: 10px 0; }
         .label { background: black; color: white; padding: 4px 10px; font-size: 0.8rem; display: inline-block; }
-        #status-log { background: #eee; border: 4px solid black; padding: 10px; margin-top: 10px; font-family: monospace; font-size: 0.8rem; height: 60px; overflow-y: auto; }
+        #status-log { background: #eee; border: 4px solid black; padding: 10px; margin-top: 10px; font-family: monospace; font-size: 0.8rem; height: 80px; overflow-y: auto; color: #d00; }
         .confirm-btn { background: var(--main-black); color: white; width: 100%; padding: 15px; border: none; cursor: pointer; font-size: 1.2rem; margin-top: 10px; }
     </style>
 </head>
@@ -54,10 +55,10 @@
                 <div><p style="font-size: 0.8rem;">OPPONENT ADDRESS</p><input type="text" class="degen-input" id="rps-user" placeholder="0x..."></div>
                 <div><p style="font-size: 0.8rem;">DUEL STAKE (USDC)</p><input type="number" class="degen-input" id="rps-stake" placeholder="0.00"></div>
             </div>
-            <button class="confirm-btn" id="rps-lock-btn" onclick="updateStatus('>> STAKE LOCKED. SELECT YOUR MOVE BELOW.')">LOCK IN STAKE</button>
+            <button class="confirm-btn" onclick="updateStatus('>> SETUP READY. NOW PICK A MOVE BELOW.')">CONFIRM SETTINGS</button>
         </div>
         <div class="rps-arena">
-            <div id="rps-pot-display" style="grid-column: span 3; text-align: center; background: black; color: white; padding: 10px; margin-bottom: 10px;">CHOOSE YOUR WEAPON</div>
+            <div id="rps-pot-display" style="grid-column: span 3; text-align: center; background: black; color: white; padding: 10px; margin-bottom: 10px;">PICK YOUR MOVE</div>
             <button class="choice-btn" onclick="playRPS(1)">🪨</button>
             <button class="choice-btn" onclick="playRPS(2)">📄</button>
             <button class="choice-btn" onclick="playRPS(3)">✂️</button>
@@ -75,54 +76,82 @@
             </div>
         </div>
     </div>
-    <div id="status-log">>> READY TO DEGEN. CONNECT WALLET.</div>
+    <div id="status-log" style="color: black;">>> STATUS: READY. CONNECT WALLET.</div>
 </div>
 
 <script>
     const CONTRACT_ADDRESS = "0x7e26bf8670Df62e454744767CBF71261a14F9175".toLowerCase(); 
     const USDC_ADDRESS = "0x3233306B70591f7d54402662054D69B0C39C9b5e".toLowerCase();
 
-    const ABI = ["function enterFiftyFifty(uint256 _amount) external", "function createRPSDuel(address _opponent, uint256 _stake, bytes32 _moveHash) external"];
-    const USDC_ABI = ["function approve(address spender, uint256 amount) returns (bool)", "function allowance(address owner, address spender) view returns (uint256)", "function balanceOf(address account) view returns (uint256)"];
+    const ABI = [
+        "function enterFiftyFifty(uint256 _amount) external", 
+        "function createRPSDuel(address _opponent, uint256 _stake, bytes32 _moveHash) external"
+    ];
+    const USDC_ABI = [
+        "function approve(address spender, uint256 amount) returns (bool)", 
+        "function allowance(address owner, address spender) view returns (uint256)", 
+        "function balanceOf(address account) view returns (uint256)"
+    ];
 
     let signer, duelContract, usdcContract;
 
     async function handleAuth() {
         if (!window.ethereum) return alert("Install MetaMask!");
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        const addr = await signer.getAddress();
-        document.getElementById('auth-btn').innerText = addr.substring(0,6) + "...";
-        
-        duelContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-        usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
-        
-        const bal = await usdcContract.balanceOf(addr);
-        updateStatus(">> CONNECTED. USDC BAL: " + ethers.utils.formatUnits(bal, 6));
+        try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            
+            // Check Network
+            const network = await provider.getNetwork();
+            if (network.chainId !== 11011) {
+                updateStatus(">> WRONG NETWORK. SWITCHING TO SHAPE SEPOLIA...");
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: '0x2b03',
+                        chainName: 'Shape Sepolia',
+                        rpcUrls: ['https://sepolia.shape.network'],
+                        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                        blockExplorerUrls: ['https://sepolia.shapescan.xyz']
+                    }]
+                });
+            }
+
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            const addr = await signer.getAddress();
+            document.getElementById('auth-btn').innerText = addr.substring(0,6) + "...";
+            
+            duelContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+            usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
+            
+            const bal = await usdcContract.balanceOf(addr);
+            updateStatus(">> CONNECTED. USDC: " + ethers.utils.formatUnits(bal, 6));
+        } catch (e) { updateStatus(">> AUTH FAILED: " + e.message); }
     }
 
     async function enterFlip(amount) {
         if (!signer) return alert("Connect Wallet!");
         try {
             const amountInUnits = ethers.utils.parseUnits(amount.toString(), 6);
+            const userAddr = await signer.getAddress();
+            
             updateStatus(">> CHECKING ALLOWANCE...");
-            const allowance = await usdcContract.allowance(await signer.getAddress(), CONTRACT_ADDRESS);
+            const allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
 
             if (allowance.lt(amountInUnits)) {
-                updateStatus(">> APPROVING USDC...");
+                updateStatus(">> APPROVING USDC (1/2)...");
                 const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
                 await txA.wait();
-                updateStatus(">> APPROVED!");
+                updateStatus(">> APPROVED! NOW STAKING...");
             }
 
-            updateStatus(">> STAKING...");
-            const txS = await duelContract.enterFiftyFifty(amountInUnits, { gasLimit: 200000 });
+            updateStatus(">> SENDING STAKE (2/2)...");
+            const txS = await duelContract.enterFiftyFifty(amountInUnits, { gasLimit: 250000 });
             await txS.wait();
-            updateStatus(">> SUCCESS! WAITING FOR OPPONENT.");
+            updateStatus(">> SUCCESS! MATCHING IN PROGRESS...");
         } catch (e) { 
             console.error(e);
-            updateStatus(">> ERROR: CHECK CONSOLE/BALANCE"); 
+            updateStatus(">> ERROR: " + (e.reason || "TX REJECTED/BAL TOO LOW")); 
         }
     }
 
@@ -130,18 +159,27 @@
         if (!signer) return alert("Connect Wallet!");
         const opponent = document.getElementById('rps-user').value.trim().toLowerCase();
         const stakeAmount = document.getElementById('rps-stake').value;
-        if (!opponent || !stakeAmount) return alert("Fill fields!");
+        if (!opponent || !stakeAmount) return alert("Set Opponent + Stake!");
 
         try {
             const stakeInUnits = ethers.utils.parseUnits(stakeAmount.toString(), 6);
             const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32));
             const moveHash = ethers.utils.keccak256(ethers.utils.solidityPack(["uint8", "bytes32"], [moveIndex, salt]));
 
-            updateStatus(">> CREATING DUEL...");
+            updateStatus(">> CHECKING RPS ALLOWANCE...");
+            const allowance = await usdcContract.allowance(await signer.getAddress(), CONTRACT_ADDRESS);
+            if (allowance.lt(stakeInUnits)) {
+                updateStatus(">> APPROVING USDC...");
+                const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+                await txA.wait();
+            }
+
+            updateStatus(">> CREATING RPS DUEL...");
             const tx = await duelContract.createRPSDuel(opponent, stakeInUnits, moveHash);
             await tx.wait();
-            updateStatus(">> DUEL CREATED! LOG: " + salt);
-        } catch (e) { updateStatus(">> RPS FAILED"); }
+            updateStatus(">> DUEL CREATED. SALT: " + salt.substring(0,10) + "...");
+            console.log("FULL SALT:", salt);
+        } catch (e) { updateStatus(">> RPS ERROR: " + (e.reason || "TX FAILED")); }
     }
 
     function switchTab(viewId, el) {
