@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DEGEN DUEL | SHAPE TESTNET</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     
     <style>
         :root {
@@ -133,10 +133,9 @@
 </div>
 
 <script>
-    // --- CONFIGURATION ---
-    // Ensure you replace this with your actual Remix address
-    const CONTRACT_ADDRESS = "PASTE_YOUR_DEPLOYED_CONTRACT_ADDRESS"; 
-    const USDC_ADDRESS = "0x3233306B70591f7d54402662054D69B0C39C9b5e";
+    // --- 1. CHANGE THESE TWO LINES ---
+    const CONTRACT_ADDRESS = "PASTE_YOUR_DEPLOYED_CONTRACT_ADDRESS".toLowerCase(); 
+    const USDC_ADDRESS = "0x3233306B70591f7d54402662054D69B0C39C9b5e".toLowerCase();
 
     const ABI = [
         "function enterFiftyFifty(uint256 _amount) external",
@@ -152,13 +151,11 @@
     let signer, duelContract, usdcContract;
 
     async function handleAuth() {
-        // Double check ethers is loaded
         if (typeof ethers === 'undefined') {
-            alert("Ethers.js library is still loading. Please wait 2 seconds.");
+            updateStatus(">> ETHERS.JS LOADING... WAIT 1s");
             return;
         }
-
-        if (!window.ethereum) return alert("MetaMask not found!");
+        if (!window.ethereum) return alert("Install MetaMask!");
         
         try {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -167,67 +164,60 @@
             const addr = await signer.getAddress();
             
             document.getElementById('auth-btn').innerText = addr.substring(0,6) + "..." + addr.substring(38);
-            updateStatus(">> WALLET CONNECTED. SHAPE SEPOLIA ACTIVE.");
+            updateStatus(">> CONNECTED: " + addr.toLowerCase());
             
             duelContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
             usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
 
-            // Listen for Flip Results
             duelContract.on("FlipResult", (winner, loser, prize) => {
                 if(winner.toLowerCase() === addr.toLowerCase()) {
-                    updateStatus("🏆 YOU WON! PRIZE SENT TO WALLET.");
+                    updateStatus("🏆 YOU WON! PRIZE SENT.");
                 } else {
-                    updateStatus("💀 YOU LOST. RE-UP AND TRY AGAIN.");
+                    updateStatus("💀 YOU LOST. TRY AGAIN.");
                 }
             });
-        } catch (e) {
-            updateStatus(">> AUTH ERROR: " + e.message);
-        }
+        } catch (e) { updateStatus(">> AUTH ERROR"); }
     }
 
     async function enterFlip(amount) {
-        if (!signer) return alert("Connect Wallet First!");
+        if (!signer) return alert("Connect Wallet!");
         try {
             const amountInUnits = ethers.utils.parseUnits(amount.toString(), 6);
             const userAddr = await signer.getAddress();
 
-            updateStatus(`>> CHECKING ALLOWANCE FOR $${amount}...`);
+            updateStatus(">> CHECKING ALLOWANCE...");
             const allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
 
             if (allowance.lt(amountInUnits)) {
-                updateStatus(">> APPROVING USDC... CONFIRM IN WALLET.");
+                updateStatus(">> APPROVING USDC...");
                 const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
                 await txA.wait();
             }
 
-            updateStatus(">> SENDING STAKE TO SHAPE...");
+            updateStatus(">> STAKING $"+amount+"...");
             const txS = await duelContract.enterFiftyFifty(amountInUnits);
             await txS.wait();
-            updateStatus(">> STAKE CONFIRMED. WAITING FOR MATCH...");
-        } catch (e) {
-            updateStatus(">> ERROR: " + e.message.substring(0, 40));
-        }
+            updateStatus(">> STAKED! WAITING FOR OPPONENT...");
+        } catch (e) { updateStatus(">> ERROR: TRANSACTION FAILED"); }
     }
 
     async function playRPS(moveIndex) {
-        if (!signer) return alert("Connect Wallet First!");
-        const opponent = document.getElementById('rps-user').value;
+        if (!signer) return alert("Connect Wallet!");
+        const opponentRaw = document.getElementById('rps-user').value;
         const stakeAmount = document.getElementById('rps-stake').value;
-
-        if (!opponent || !stakeAmount) return alert("Set Opponent and Stake!");
+        if (!opponentRaw || !stakeAmount) return alert("Fill fields!");
 
         try {
+            const opponent = opponentRaw.trim().toLowerCase();
             const stakeInUnits = ethers.utils.parseUnits(stakeAmount.toString(), 6);
             const salt = ethers.utils.hexlify(ethers.utils.randomBytes(32));
             const moveHash = ethers.utils.keccak256(ethers.utils.solidityPack(["uint8", "bytes32"], [moveIndex, salt]));
 
-            updateStatus(">> INITIATING RPS DUEL...");
+            updateStatus(">> CREATING RPS DUEL...");
             const tx = await duelContract.createRPSDuel(opponent, stakeInUnits, moveHash);
             await tx.wait();
-            updateStatus(">> DUEL CREATED. OPPONENT MUST NOW COMMIT.");
-        } catch (e) {
-            updateStatus(">> RPS ERROR: " + e.message.substring(0, 40));
-        }
+            updateStatus(">> DUEL CREATED! WAIT FOR OPPONENT.");
+        } catch (e) { updateStatus(">> RPS ERROR"); }
     }
 
     function switchTab(viewId, el) {
@@ -237,9 +227,7 @@
         el.classList.add('active');
     }
 
-    function updateStatus(msg) {
-        document.getElementById('status-log').innerText = msg;
-    }
+    function updateStatus(msg) { document.getElementById('status-log').innerText = msg; }
 </script>
 </body>
 </html>
