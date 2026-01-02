@@ -3,264 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEGEN DUEL | NE-BRUTALIST</title>
+    <title>DEGEN DUEL | MONO-SPICE EDITION</title>
     <style>
         :root {
-            --bg-yellow: #FFDE00;
-            --card-pink: #FF80BF;
-            --card-green: #00FF41;
-            --card-blue: #00D1FF;
-            --black: #000000;
-            --shadow: 8px 8px 0px 0px #000000;
-            --shadow-small: 4px 4px 0px 0px #000000;
+            --bg: #ffffff;
+            --main-black: #000000;
+            --spice-purple: #BC00FF;
+            --spice-lime: #00FF19;
+            --spice-red: #FF3131;
+            --spice-blue: #00E0FF;
+            --spice-yellow: #FFFF00;
+            --brutal-shadow: 10px 10px 0px 0px #000000;
+            --small-shadow: 4px 4px 0px 0px #000000;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Arial Black', sans-serif;
         }
 
         body {
-            background-color: var(--bg-yellow);
-            color: var(--black);
+            background-color: var(--bg);
+            background-image: radial-gradient(var(--main-black) 1px, transparent 0);
+            background-size: 25px 25px;
+            color: var(--main-black);
             padding: 20px;
+            line-height: 1.1;
         }
 
-        /* Layout */
         .container {
             max-width: 900px;
             margin: 0 auto;
         }
 
+        /* --- HEADER & STATS --- */
         header {
-            background: white;
-            border: 4px solid var(--black);
-            padding: 20px;
-            box-shadow: var(--shadow);
+            background: var(--main-black);
+            color: white;
+            padding: 30px;
+            border: 6px solid var(--main-black);
+            box-shadow: var(--brutal-shadow);
             margin-bottom: 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transform: rotate(-0.5deg);
         }
 
-        .logo {
-            font-size: 2.5rem;
-            font-weight: 900;
-            font-style: italic;
+        .logo-text {
+            font-size: 3.5rem;
+            letter-spacing: -3px;
             text-transform: uppercase;
+            font-style: italic;
         }
 
-        /* Navigation */
-        .tabs {
+        .balance-box {
+            background: var(--spice-yellow);
+            color: black;
+            padding: 10px 20px;
+            border: 4px solid black;
+            box-shadow: var(--small-shadow);
+            font-size: 1.2rem;
+        }
+
+        /* --- NAVIGATION --- */
+        .nav-tabs {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             margin-bottom: 30px;
         }
 
-        .tab-btn {
+        .tab {
             flex: 1;
-            padding: 15px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border: 4px solid var(--black);
+            padding: 20px;
             background: white;
+            border: 5px solid black;
+            box-shadow: var(--brutal-shadow);
             cursor: pointer;
-            box-shadow: var(--shadow-small);
-            transition: all 0.1s;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            transition: 0.1s;
         }
 
-        .tab-btn.active {
-            background: var(--card-blue);
-            transform: translate(2px, 2px);
+        .tab.active {
+            background: var(--spice-purple);
+            color: white;
+            transform: translate(6px, 6px);
             box-shadow: none;
         }
 
-        /* Game Sections */
-        .game-area {
-            display: none;
-        }
-
-        .game-area.active {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
-        }
-
-        /* Neo-Brutalist Components */
+        /* --- CARDS & GAMEPLAY --- */
         .card {
             background: white;
-            border: 4px solid var(--black);
-            padding: 20px;
-            box-shadow: var(--shadow);
+            border: 6px solid var(--main-black);
+            padding: 30px;
+            box-shadow: var(--brutal-shadow);
+            margin-bottom: 30px;
         }
 
-        .search-input {
-            width: 100%;
-            padding: 10px;
-            border: 4px solid var(--black);
-            margin-top: 10px;
-            font-size: 1rem;
-            outline: none;
-        }
-
-        .btn-action {
-            display: block;
-            width: 100%;
-            margin-top: 10px;
-            padding: 15px;
-            background: var(--card-green);
-            border: 4px solid var(--black);
-            font-weight: 900;
-            cursor: pointer;
-            box-shadow: var(--shadow-small);
-        }
-
-        .btn-action:active {
-            transform: translate(2px, 2px);
-            box-shadow: none;
-        }
+        .game-view { display: none; }
+        .game-view.active { display: block; }
 
         /* RPS Specifics */
-        .rps-grid {
+        .rps-arena {
+            background: var(--spice-lime);
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+            border: 6px solid black;
             margin-top: 20px;
         }
 
-        .rps-choice {
-            font-size: 3rem;
-            padding: 20px;
+        .choice-btn {
             background: white;
-            border: 4px solid var(--black);
-            box-shadow: var(--shadow-small);
+            border: 4px solid black;
+            font-size: 4rem;
+            padding: 20px;
             cursor: pointer;
+            box-shadow: var(--small-shadow);
+            transition: 0.1s;
         }
+
+        .choice-btn:hover { background: var(--spice-blue); }
+        .choice-btn:active { transform: translate(4px, 4px); box-shadow: none; }
 
         /* 50/50 Specifics */
-        .fifty-fifty-grid {
+        .power-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            grid-column: span 2;
+            gap: 25px;
+            margin: 30px 0;
         }
 
-        .power-card {
-            background: var(--card-pink);
-            padding: 30px 10px;
+        .power-btn {
+            background: white;
+            border: 6px solid black;
+            padding: 40px 10px;
             text-align: center;
-            border: 4px solid var(--black);
-            box-shadow: var(--shadow);
+            box-shadow: var(--brutal-shadow);
             cursor: pointer;
+            transition: 0.1s;
         }
 
-        .prize-banner {
-            background: var(--black);
+        .power-btn:hover { background: var(--spice-red); color: white; }
+        .power-btn:active { transform: translate(8px, 8px); box-shadow: none; }
+
+        /* --- CARNAGE (HISTORY) --- */
+        .carnage-trigger {
+            width: 100%;
+            background: white;
+            border: 6px solid black;
+            padding: 25px;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: var(--brutal-shadow);
+            margin-top: 20px;
+            text-transform: uppercase;
+        }
+
+        .carnage-trigger:hover { background: var(--main-black); color: white; }
+
+        #carnage-list {
+            display: none;
+            background: white;
+            border: 6px solid black;
+            margin-top: 10px;
+            padding: 20px;
+            box-shadow: var(--brutal-shadow);
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { border-bottom: 6px solid black; padding: 15px; text-align: left; }
+        td { padding: 15px; border-bottom: 2px solid black; font-family: monospace; font-weight: bold; }
+
+        /* --- INPUTS --- */
+        .degen-input {
+            width: 100%;
+            padding: 15px;
+            border: 4px solid black;
+            font-size: 1.2rem;
+            outline: none;
+            margin: 10px 0;
+        }
+
+        .label {
+            background: black;
             color: white;
-            padding: 10px;
-            text-align: center;
-            margin: 15px 0;
-            font-weight: bold;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            display: inline-block;
         }
-
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <div class="logo">DEGEN.APP</div>
-        <div style="font-weight: bold; border-left: 4px solid black; padding-left: 15px;">
-            BALANCE: <span style="color: #ff00ff">2,500 USDC</span>
-        </div>
+        <div class="logo-text">DEGEN<br>DUEL</div>
+        <div class="balance-box">4,200.00 USDC</div>
     </header>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('rps')">ROCK-PAPER-DUEL</button>
-        <button class="tab-btn" onclick="switchTab('flip')">50/50 DOUBLE UP</button>
+    <div class="nav-tabs">
+        <button class="tab active" onclick="switchTab('rps-view', this)">🪨 ROCK-PAPER</button>
+        <button class="tab" onclick="switchTab('flip-view', this)">🎲 50/50 DOUBLE</button>
     </div>
 
-    <div id="rps" class="game-area active">
+    <div id="rps-view" class="game-view active">
         <div class="card">
-            <h3 style="text-decoration: underline;">1. FIND VICTIM</h3>
-            <input type="text" class="search-input" placeholder="Enter username...">
-            <div style="margin-top: 20px;">
-                <p>RECENT OPPONENTS:</p>
-                <div style="border: 2px solid black; padding: 5px; margin-top: 5px;">@Vitalik_Fan</div>
-                <div style="border: 2px solid black; padding: 5px; margin-top: 5px;">@MoonBoy88</div>
+            <span class="label">MATCHMAKING</span>
+            <h2 style="margin-top:10px;">SEARCH OPPONENT</h2>
+            <input type="text" class="degen-input" placeholder="ENTER USERNAME...">
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button style="background:var(--spice-blue); padding:5px 15px; border:2px solid black; cursor:pointer;">@Vitalik</button>
+                <button style="background:var(--spice-lime); padding:5px 15px; border:2px solid black; cursor:pointer;">@Anon_Deg3n</button>
             </div>
         </div>
 
-        <div class="card" style="background-color: var(--card-blue);">
-            <h2 style="text-align: center; font-size: 1.5rem;">BEST OF 3 CHALLENGE</h2>
-            <div class="prize-banner">POT: 20 USDC (95% Payout)</div>
-            
-            <div style="display: flex; justify-content: space-around; margin: 20px 0;">
-                <div style="text-align: center;">YOU<br><span style="font-size: 2rem;">?</span></div>
-                <div style="font-size: 2rem; font-weight: 900;">VS</div>
-                <div style="text-align: center;">THEM<br><span style="font-size: 2rem;">?</span></div>
+        <div class="rps-arena">
+            <div style="grid-column: span 3; text-align: center; background: black; color: white; padding: 10px; margin-bottom: 10px;">
+                PRIZE POT: 190.00 USDC (5% FEE APPLIED)
             </div>
-
-            <div class="rps-grid">
-                <button class="rps-choice" onclick="selectRPS('rock')">🪨</button>
-                <button class="rps-choice" onclick="selectRPS('paper')">📄</button>
-                <button class="rps-choice" onclick="selectRPS('scissors')">✂️</button>
-            </div>
+            <button class="choice-btn" onclick="playRPS('ROCK')">🪨</button>
+            <button class="choice-btn" onclick="playRPS('PAPER')">📄</button>
+            <button class="choice-btn" onclick="playRPS('SCISSORS')">✂️</button>
         </div>
     </div>
 
-    <div id="flip" class="game-area">
-        <div class="fifty-fifty-grid">
-            <div class="power-card" onclick="deposit(1)">
-                <div style="font-size: 1.2rem;">DEPOSIT</div>
-                <div style="font-size: 2.5rem; font-weight: 900;">1</div>
-                <div>USDC</div>
-            </div>
-            <div class="power-card" style="background: var(--card-green);" onclick="deposit(10)">
-                <div style="font-size: 1.2rem;">DEPOSIT</div>
-                <div style="font-size: 2.5rem; font-weight: 900;">10</div>
-                <div>USDC</div>
-            </div>
-            <div class="power-card" style="background: white;" onclick="deposit(100)">
-                <div style="font-size: 1.2rem;">DEPOSIT</div>
-                <div style="font-size: 2.5rem; font-weight: 900;">100</div>
-                <div>USDC</div>
-            </div>
+    <div id="flip-view" class="game-view">
+        <div class="card" style="background: var(--spice-purple); color: white; border-radius: 0;">
+            <h2 style="font-size: 3rem; letter-spacing: -2px;">50/50 FLIP</h2>
+            <p>INSTANT MATCHING. POWERS OF 10 ONLY.</p>
             
-            <div class="card" style="grid-column: span 3; margin-top: 20px; background: #eee;">
-                <h3>WAITING ROOM</h3>
-                <p id="status-msg">No active deposits. Choose a power of 10 to start.</p>
-                <button id="withdraw-btn" class="btn-action" style="display: none; background: #ff4d4d;">WITHDRAW FUNDS</button>
+            <div class="power-grid">
+                <div class="power-btn" style="color: black;" onclick="enterFlip(1)">
+                    <h2 style="font-size: 2.5rem;">$1</h2>
+                </div>
+                <div class="power-btn" style="color: black; background: var(--spice-yellow);" onclick="enterFlip(10)">
+                    <h2 style="font-size: 2.5rem;">$10</h2>
+                </div>
+                <div class="power-btn" style="color: black;" onclick="enterFlip(100)">
+                    <h2 style="font-size: 2.5rem;">$100</h2>
+                </div>
             </div>
         </div>
+
+        <div id="waiting-area" class="card" style="display:none; text-align: center; border-style: dashed; background: #fff5f5;">
+            <h2 id="wait-msg" style="color: var(--spice-red); font-size: 1.5rem;">MATCHING DEPOSIT...</h2>
+            <button class="carnage-trigger" style="font-size: 1rem; padding: 10px; background: var(--spice-yellow);" onclick="cancelFlip()">CANCEL & REFUND</button>
+        </div>
+    </div>
+
+    <button class="carnage-trigger" onclick="toggleCarnage()">View Recent Carnage ↓</button>
+    <div id="carnage-list">
+        <table>
+            <thead>
+                <tr>
+                    <th>GAME</th>
+                    <th>WINNER</th>
+                    <th>POT (USDC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>50/50</td><td>@MoonBoY</td><td style="color:var(--spice-purple)">$19.00</td></tr>
+                <tr><td>RPS</td><td>@Chad_42</td><td style="color:var(--spice-purple)">$190.00</td></tr>
+                <tr><td>50/50</td><td>@Satoshi</td><td style="color:var(--spice-purple)">$1.90</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    function switchTab(tab) {
-        // Toggle Buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-
-        // Toggle Views
-        document.querySelectorAll('.game-area').forEach(view => view.classList.remove('active'));
-        document.getElementById(tab).classList.add('active');
+    function switchTab(viewId, el) {
+        document.querySelectorAll('.game-view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        el.classList.add('active');
     }
 
-    function selectRPS(choice) {
-        alert("You selected " + choice.toUpperCase() + ". Waiting for opponent to join and stake...");
+    function toggleCarnage() {
+        const list = document.getElementById('carnage-list');
+        list.style.display = list.style.display === 'block' ? 'none' : 'block';
     }
 
-    function deposit(amt) {
-        const msg = document.getElementById('status-msg');
-        const btn = document.getElementById('withdraw-btn');
-        
-        msg.innerText = "LOCKED: " + amt + " USDC in contract. Waiting for a challenger to send " + amt + " USDC...";
-        msg.style.color = "red";
-        msg.style.fontWeight = "bold";
-        btn.style.display = "block";
+    function playRPS(move) {
+        alert("STAKED! Waiting for opponent to counter your " + move);
+    }
+
+    function enterFlip(amt) {
+        document.getElementById('waiting-area').style.display = 'block';
+        document.getElementById('wait-msg').innerText = "LOCKED $" + amt + ". WAITING FOR CHALLENGER...";
+    }
+
+    function cancelFlip() {
+        document.getElementById('waiting-area').style.display = 'none';
+        alert("STAKE RETURNED TO WALLET.");
     }
 </script>
 
