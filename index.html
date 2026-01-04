@@ -7,113 +7,65 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
-            --bg: #f4f4f4;
-            --black: #000000;
-            --purple: #BC00FF;
-            --lime: #00FF19;
-            --yellow: #FFFF00;
-            --white: #ffffff;
+            --bg: #ffffff; --black: #000000; --purple: #BC00FF;
+            --lime: #00FF19; --yellow: #FFFF00;
             --shadow: 8px 8px 0px 0px #000000;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; }
-        body { background-color: var(--bg); padding: 20px; color: var(--black); }
-
-        .container { max-width: 500px; margin: 0 auto; }
+        body { background-color: var(--bg); padding: 40px; }
+        .container { max-width: 600px; margin: 0 auto; }
         
-        .card { 
-            background: var(--white); 
-            border: 5px solid var(--black); 
-            padding: 25px; 
-            box-shadow: var(--shadow); 
-            margin-bottom: 25px; 
-        }
-
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card { background: white; border: 5px solid var(--black); padding: 30px; box-shadow: var(--shadow); margin-bottom: 20px; }
         
         .btn { 
-            background: var(--yellow); 
-            border: 4px solid var(--black); 
-            padding: 15px; 
-            cursor: pointer; 
-            width: 100%; 
-            font-size: 1.1rem; 
-            box-shadow: 4px 4px 0px 0px #000; 
-            transition: 0.1s;
-            display: block;
-            text-transform: uppercase;
+            background: var(--yellow); border: 4px solid var(--black); padding: 15px; 
+            cursor: pointer; width: 100%; font-size: 1.2rem; box-shadow: 4px 4px 0px 0px #000; 
+            margin-bottom: 10px; transition: 0.1s;
         }
-        .btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0px 0px #000; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+        .btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px 0px #000; }
+        .btn:disabled { background: #eee; color: #aaa; cursor: not-allowed; box-shadow: none; }
 
-        .tier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .power-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
-        .status-box { 
-            background: var(--black); 
-            color: var(--lime); 
-            padding: 15px; 
-            font-family: 'Courier New', monospace; 
-            font-size: 0.85rem; 
-            height: 140px; 
-            overflow-y: auto; 
-            border: 4px solid var(--black); 
-            line-height: 1.4;
+        #status-log { 
+            background: #000; color: var(--lime); padding: 15px; 
+            font-family: monospace; font-size: 0.8rem; height: 120px; 
+            overflow-y: auto; border: 4px solid var(--black); line-height: 1.4;
         }
 
-        .lobby-ui { 
-            background: var(--purple); 
-            color: white; 
-            display: none; 
-            margin-top: 20px;
-            padding: 20px;
-            border: 4px solid var(--black);
+        .lobby-overlay {
+            display: none; background: var(--purple); color: white;
+            padding: 20px; border: 4px solid var(--black); margin-top: 20px;
             text-align: center;
         }
-
-        #connect-btn.connected {
-            background: var(--lime);
-            animation: none;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        .pulse { animation: pulse 1.5s infinite; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <div class="header">
-            <h1>DEGEN FLIP</h1>
-            <div style="font-size: 0.8rem; background: var(--lime); padding: 5px 10px; border: 3px solid #000;">SEPOLIA</div>
-        </div>
-        <button class="btn pulse" id="connect-btn" onclick="connect()">CONNECT WALLET</button>
+        <h1>DEGEN P2P FLIP</h1>
+        <p style="font-size: 0.8rem; margin-bottom: 20px;">NETWORK: SEPOLIA (TESTNET)</p>
+        <button class="btn" id="connect-btn" onclick="connect()">CONNECT WALLET</button>
     </div>
 
-    <div class="card" id="game-ui" style="opacity: 0.5; pointer-events: none;">
-        <h3>SELECT YOUR STAKE</h3>
-        <div class="tier-grid">
+    <div class="card" id="game-ui" style="background: var(--purple); color: white; opacity: 0.5; pointer-events: none;">
+        <h2 style="margin-bottom: 15px;">SELECT STAKE</h2>
+        <div class="power-grid">
             <button class="btn" onclick="play(1)">$1 USDC</button>
             <button class="btn" onclick="play(10)">$10 USDC</button>
             <button class="btn" onclick="play(100)">$100 USDC</button>
             <button class="btn" onclick="play(1000)">$1K USDC</button>
         </div>
 
-        <div id="lobby-view" class="lobby-ui">
-            <h2 id="lobby-text">IN LOBBY...</h2>
-            <p style="font-size: 0.8rem; margin: 10px 0;">Waiting for opponent to match your stake.</p>
-            <button class="btn" style="background: var(--white); color: black;" onclick="cancel()">QUIT & REFUND</button>
+        <div id="lobby-view" class="lobby-overlay">
+            <h3 id="lobby-text">WAITING FOR MATCH...</h3>
+            <p style="font-size: 0.7rem; margin: 10px 0;">Your funds are in the contract lobby.</p>
+            <button class="btn" style="background: white; color: black;" onclick="cancel()">QUIT & REFUND</button>
         </div>
     </div>
 
-    <div class="card">
-        <h3>SYSTEM LOG</h3>
-        <div id="status-log" class="status-box">>> READY. PLEASE CONNECT.</div>
-    </div>
+    <div id="status-log">>> SYSTEM READY. CONNECT TO START.</div>
 </div>
 
 <script>
@@ -121,33 +73,31 @@
     const CONTRACT_ADDRESS = "0xe3e5Cf7764536a3E2c935078433DD5A7D8e72b43".toLowerCase(); 
     const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238".toLowerCase();
 
-    let signer, duelContract, usdcContract, currentStake;
+    let signer, duelContract, usdcContract, currentStakeRaw;
 
     async function connect() {
-        console.log("Attempting to connect...");
-        if (!window.ethereum) return alert("MetaMask not found!");
+        if (!window.ethereum) return alert("Install MetaMask");
         
         try {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             
-            // Force account request
-            const accounts = await provider.send("eth_requestAccounts", []);
-            const address = accounts[0];
-            
-            // Network Check (Sepolia is 11155111)
+            // 1. Switch Network if needed
             const { chainId } = await provider.getNetwork();
             if (chainId !== 11155111) {
-                updateLog(">> WRONG NETWORK. SWITCHING...");
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0xaa36a7' }],
+                    params: [{ chainId: '0xaa36a7' }], 
                 });
                 location.reload();
                 return;
             }
 
-            // Initialize Contracts
+            // 2. Request Account
+            const accounts = await provider.send("eth_requestAccounts", []);
+            const addr = accounts[0];
             signer = provider.getSigner();
+
+            // 3. Setup Contracts
             duelContract = new ethers.Contract(CONTRACT_ADDRESS, [
                 "function enterFiftyFifty(uint256 _amount) external",
                 "function cancelFlip(uint256 _amount) external",
@@ -159,77 +109,74 @@
                 "function allowance(address o, address s) view returns (uint256)"
             ], signer);
 
-            // UI UPDATES - Guaranteed to run after successful logic above
-            const btn = document.getElementById('connect-btn');
-            btn.innerText = address.substring(0,6) + "..." + address.slice(-4);
-            btn.classList.remove('pulse');
-            btn.classList.add('connected');
+            // 4. Update UI
+            document.getElementById('connect-btn').innerText = addr.substring(0,6) + "..." + addr.slice(-4);
+            document.getElementById('connect-btn').style.background = "#00FF19";
+            document.getElementById('game-ui').style.opacity = "1";
+            document.getElementById('game-ui').style.pointerEvents = "auto";
             
-            const gameUI = document.getElementById('game-ui');
-            gameUI.style.opacity = "1";
-            gameUI.style.pointerEvents = "auto";
+            updateLog(">> WALLET CONNECTED: " + addr);
 
-            updateLog(">> CONNECTED: " + address);
-            
-            // Listen for matches finishing
+            // 5. Listen for the Flip Event
             duelContract.on("FlipResult", (winner) => {
-                updateLog(">> MATCH COMPLETED! WINNER: " + winner.substring(0,8));
+                const isYou = winner.toLowerCase() === addr.toLowerCase();
+                updateLog(isYou ? ">> YOU WON THE FLIP! +95%" : ">> YOU LOST THE FLIP.");
                 document.getElementById('lobby-view').style.display = 'none';
             });
 
-        } catch (err) {
-            console.error(err);
-            updateLog("!! CONNECTION ERROR: " + err.message.substring(0, 40));
+        } catch (e) {
+            updateLog("!! CONNECTION ERROR");
+            console.error(e);
         }
     }
 
     async function play(amount) {
         if (!signer) return;
-        currentStake = ethers.utils.parseUnits(amount.toString(), 6);
+        currentStakeRaw = ethers.utils.parseUnits(amount.toString(), 6);
         
         try {
-            updateLog(`>> STAKING $${amount}...`);
+            updateLog(`>> INITIATING $${amount} STAKE...`);
             const userAddr = await signer.getAddress();
             
-            // Check Allowance
+            // Check USDC Allowance
             const allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
-            if (allowance.lt(currentStake)) {
-                updateLog(">> APPROVING USDC...");
+            if (allowance.lt(currentStakeRaw)) {
+                updateLog(">> APPROVING USDC (ONE-TIME)...");
                 const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
                 await txA.wait();
                 updateLog(">> APPROVED.");
             }
 
+            // Enter Game
             updateLog(">> JOINING LOBBY...");
-            const txS = await duelContract.enterFiftyFifty(currentStake);
+            const txS = await duelContract.enterFiftyFifty(currentStakeRaw);
             await txS.wait();
             
+            // Show Matchmaking UI
             document.getElementById('lobby-view').style.display = 'block';
-            document.getElementById('lobby-text').innerText = `IN $${amount} LOBBY`;
-            updateLog(`>> ENTERED $${amount} LOBBY. WAITING...`);
+            document.getElementById('lobby-text').innerText = `IN $${amount} LOBBY...`;
+            updateLog(`>> YOU ARE NOW IN THE $${amount} LOBBY.`);
         } catch (e) {
-            updateLog("!! ERROR: " + (e.reason || "FAILED"));
-            console.error(e);
+            updateLog("!! ERROR: " + (e.reason || "TRANSACTION REJECTED"));
         }
     }
 
     async function cancel() {
-        if (!currentStake) return;
+        if (!currentStakeRaw) return;
         try {
-            updateLog(">> CANCELLING & REFUNDING...");
-            const tx = await duelContract.cancelFlip(currentStake);
+            updateLog(">> REQUESTING REFUND...");
+            const tx = await duelContract.cancelFlip(currentStakeRaw);
             await tx.wait();
             document.getElementById('lobby-view').style.display = 'none';
-            updateLog(">> REFUND SUCCESSFUL.");
+            updateLog(">> REFUND COMPLETE. LEFT LOBBY.");
         } catch (e) {
             updateLog("!! CANCEL FAILED");
-            console.error(e);
         }
     }
 
     function updateLog(msg) {
         const log = document.getElementById('status-log');
-        log.innerHTML += `<br>> ${msg}`;
+        log.innerHTML += `<br>${msg}`;
         log.scrollTop = log.scrollHeight;
     }
 </script>
