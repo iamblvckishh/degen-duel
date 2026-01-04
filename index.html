@@ -59,16 +59,6 @@
         if (!window.ethereum) return alert("Install MetaMask");
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         
-        const { chainId } = await provider.getNetwork();
-        if (chainId !== 11155111) {
-            await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0xaa36a7' }], 
-            });
-            location.reload();
-            return;
-        }
-
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         const addr = await signer.getAddress();
@@ -78,7 +68,6 @@
         document.getElementById('game-ui').style.opacity = "1";
         document.getElementById('game-ui').style.pointerEvents = "auto";
         
-        // Match the working ABI structure exactly
         duelContract = new ethers.Contract(CONTRACT_ADDRESS, [
             "function enterFiftyFifty(uint256 _amount) external",
             "function cancelFlip(uint256 _amount) external"
@@ -89,49 +78,51 @@
             "function allowance(address o, address s) view returns (uint256)"
         ], signer);
         
-        updateLog(">> CONNECTED TO SEPOLIA");
+        updateLog(">> CONNECTED.");
     }
 
     async function play(amount) {
-        if (!signer) return alert("Connect first");
+        if (!signer) return;
         try {
             currentStakeRaw = ethers.utils.parseUnits(amount.toString(), 6);
-            updateLog(">> CHECKING ALLOWANCE...");
+            const userAddr = await signer.getAddress();
             
-            const allowance = await usdcContract.allowance(await signer.getAddress(), CONTRACT_ADDRESS);
+            updateLog(">> CHECKING ALLOWANCE...");
+            const allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
+            
             if (allowance.lt(currentStakeRaw)) {
-                updateLog(">> APPROVING USDC...");
-                const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
-                await txA.wait();
+                updateLog(">> APPROVING USDC (ACTION REQUIRED)...");
+                // Force a gas limit to prevent "stuck" estimation
+                const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256, { gasLimit: 100000 });
+                updateLog(">> WAITING FOR BLOCK...");
+                await txA.wait(1); // Wait for exactly 1 confirmation
+                updateLog(">> APPROVED.");
             }
 
             updateLog(">> ENTERING LOBBY...");
-            const txS = await duelContract.enterFiftyFifty(currentStakeRaw);
-            await txS.wait();
+            // Force gas limit here too
+            const txS = await duelContract.enterFiftyFifty(currentStakeRaw, { gasLimit: 250000 });
+            await txS.wait(1);
             
             document.getElementById('lobby-view').style.display = 'block';
-            updateLog(">> TX CONFIRMED! IN LOBBY.");
+            updateLog(">> IN LOBBY. GOOD LUCK.");
         } catch (e) {
-            updateLog("!! ERROR: " + (e.reason || "FAILED"));
+            updateLog("!! ERROR: CHECK CONSOLE");
+            console.error(e);
         }
     }
 
     async function cancel() {
-        if (!currentStakeRaw) return;
         try {
-            updateLog(">> EXITING LOBBY...");
-            const tx = await duelContract.cancelFlip(currentStakeRaw);
-            await tx.wait();
+            updateLog(">> EXITING...");
+            const tx = await duelContract.cancelFlip(currentStakeRaw, { gasLimit: 150000 });
+            await tx.wait(1);
             document.getElementById('lobby-view').style.display = 'none';
             updateLog(">> REFUNDED.");
-        } catch (e) {
-            updateLog("!! CANCEL FAILED");
-        }
+        } catch (e) { updateLog("!! FAILED"); }
     }
 
-    function updateLog(msg) { 
-        document.getElementById('status-log').innerText = msg; 
-    }
+    function updateLog(msg) { document.getElementById('status-log').innerText = msg; }
 </script>
 </body>
 </html>
