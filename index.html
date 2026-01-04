@@ -18,7 +18,7 @@
         .btn { background: var(--yellow); border: 4px solid var(--black); padding: 15px; cursor: pointer; width: 100%; font-size: 1.2rem; box-shadow: 4px 4px 0px 0px var(--black); margin-bottom: 10px; transition: 0.1s; text-transform: uppercase; }
         .btn:active { transform: translate(2px, 2px); box-shadow: none; }
         .power-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        #status-log { background: #111; color: var(--lime); padding: 15px; font-family: monospace; font-size: 0.9rem; height: 120px; overflow-y: auto; border: 3px solid var(--lime); line-height: 1.5; }
+        #status-log { background: #111; color: var(--lime); padding: 15px; font-family: monospace; font-size: 0.9rem; height: 100px; overflow-y: auto; border: 3px solid var(--lime); line-height: 1.5; }
         .lobby-overlay { display: none; background: var(--lime); color: var(--black); padding: 20px; border: 4px solid var(--black); margin-top: 20px; text-align: center; }
     </style>
 </head>
@@ -41,7 +41,7 @@
         </div>
 
         <div id="lobby-view" class="lobby-overlay">
-            <h3>MATCHMAKING...</h3>
+            <h3 id="lobby-text">IN LOBBY...</h3>
             <button class="btn" style="background: var(--white); margin-top: 15px;" onclick="cancel()">QUIT & REFUND</button>
         </div>
     </div>
@@ -50,7 +50,8 @@
 </div>
 
 <script>
-    const CONTRACT_ADDRESS = "0xe3e5Cf7764536a3E2c935078433DD5A7D8e72b43".toLowerCase(); 
+    // --- UPDATED ADDRESS ---
+    const CONTRACT_ADDRESS = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28".toLowerCase(); 
     const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238".toLowerCase();
 
     let signer, duelContract, usdcContract, currentStakeRaw;
@@ -59,6 +60,16 @@
         if (!window.ethereum) return alert("Install MetaMask");
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         
+        const { chainId } = await provider.getNetwork();
+        if (chainId !== 11155111) {
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0xaa36a7' }], 
+            });
+            location.reload();
+            return;
+        }
+
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         const addr = await signer.getAddress();
@@ -78,51 +89,52 @@
             "function allowance(address o, address s) view returns (uint256)"
         ], signer);
         
-        updateLog(">> CONNECTED.");
+        updateLog("CONNECTED TO SEPOLIA");
     }
 
     async function play(amount) {
-        if (!signer) return;
+        if (!signer) return alert("Connect first");
         try {
             currentStakeRaw = ethers.utils.parseUnits(amount.toString(), 6);
-            const userAddr = await signer.getAddress();
+            updateLog("CHECKING ALLOWANCE...");
             
-            updateLog(">> CHECKING ALLOWANCE...");
-            const allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
+            const addr = await signer.getAddress();
+            const allowance = await usdcContract.allowance(addr, CONTRACT_ADDRESS);
             
             if (allowance.lt(currentStakeRaw)) {
-                updateLog(">> APPROVING USDC (ACTION REQUIRED)...");
-                // Force a gas limit to prevent "stuck" estimation
-                const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256, { gasLimit: 100000 });
-                updateLog(">> WAITING FOR BLOCK...");
-                await txA.wait(1); // Wait for exactly 1 confirmation
-                updateLog(">> APPROVED.");
+                updateLog("APPROVING USDC...");
+                const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+                await txA.wait(); // Fixed: waits for confirmation before moving on
+                updateLog("APPROVED.");
             }
 
-            updateLog(">> ENTERING LOBBY...");
-            // Force gas limit here too
-            const txS = await duelContract.enterFiftyFifty(currentStakeRaw, { gasLimit: 250000 });
-            await txS.wait(1);
+            updateLog("ENTERING LOBBY...");
+            const txS = await duelContract.enterFiftyFifty(currentStakeRaw);
+            await txS.wait();
             
             document.getElementById('lobby-view').style.display = 'block';
-            updateLog(">> IN LOBBY. GOOD LUCK.");
+            document.getElementById('lobby-text').innerText = "IN $" + amount + " LOBBY...";
+            updateLog("IN LOBBY. WAITING FOR MATCH.");
         } catch (e) {
-            updateLog("!! ERROR: CHECK CONSOLE");
+            updateLog("!! ERROR: " + (e.reason || "FAILED"));
             console.error(e);
         }
     }
 
     async function cancel() {
+        if (!currentStakeRaw) return;
         try {
-            updateLog(">> EXITING...");
-            const tx = await duelContract.cancelFlip(currentStakeRaw, { gasLimit: 150000 });
-            await tx.wait(1);
+            updateLog("REFUNDING...");
+            const tx = await duelContract.cancelFlip(currentStakeRaw);
+            await tx.wait();
             document.getElementById('lobby-view').style.display = 'none';
-            updateLog(">> REFUNDED.");
-        } catch (e) { updateLog("!! FAILED"); }
+            updateLog("REFUNDED.");
+        } catch (e) {
+            updateLog("CANCEL FAILED");
+        }
     }
 
-    function updateLog(msg) { document.getElementById('status-log').innerText = msg; }
+    function updateLog(msg) { document.getElementById('status-log').innerText = ">> " + msg; }
 </script>
 </body>
 </html>
