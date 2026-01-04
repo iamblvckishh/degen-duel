@@ -103,7 +103,7 @@
             font-size: 1rem;
         }
         .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--black); }
-        .btn-cancel { background: var(--red); color: white; display: none; margin-top: 15px; }
+        .btn-refund { background: var(--red); color: white; margin-top: 15px; display: none; }
 
         .status-area { min-height: 60px; display: flex; align-items: center; justify-content: center; flex-direction: column; margin-bottom: 10px; }
         .status { font-size: 0.8rem; font-weight: bold; text-align: center; }
@@ -163,6 +163,7 @@
         
         <div class="status-area">
             <div id="radar-status" class="status blink">INITIALIZING SENSORS...</div>
+            <div id="wait-timer" style="font-size: 0.5rem; margin-top: 5px; opacity: 0.7;"></div>
         </div>
 
         <div id="result-container"></div>
@@ -174,7 +175,7 @@
             </div>
         </div>
 
-        <button class="btn" onclick="showHelp()" style="background: var(--red); color: white; margin-top: 15px;">NEED A REFUND?</button>
+        <button id="refund-btn" class="btn btn-refund" onclick="showHelp()">NEED A REFUND?</button>
         <button class="btn" style="background:transparent; color:var(--text); margin-top:10px;" onclick="location.reload()">← BACK</button>
         
         <div id="debug-log" class="console-log"></div>
@@ -220,8 +221,8 @@
 
     let selectedWei = "0";
     let lobbyInterval;
+    let refundInterval;
 
-    // Load saved address
     window.onload = () => {
         const saved = localStorage.getItem('tracked_addr');
         if (saved) document.getElementById('user-address-input').value = saved;
@@ -266,11 +267,42 @@
         localStorage.setItem('tracked_addr', myAddr);
         selectedWei = ethers.utils.parseEther(amt);
         
+        // PERSISTENT TIMER LOGIC: Save entry time to localStorage
+        let entryTime = localStorage.getItem('arena_entry_time');
+        if (!entryTime) {
+            entryTime = Date.now();
+            localStorage.setItem('arena_entry_time', entryTime);
+        }
+        
         document.getElementById('amt-display').innerText = amt + " ETH DUEL";
         document.getElementById('view-home').classList.remove('active');
         document.getElementById('view-radar').classList.add('active');
         fetchHistory();
         runRadar(myAddr);
+        startRefundTimer(entryTime);
+    }
+
+    function startRefundTimer(entryTime) {
+        const refundBtn = document.getElementById('refund-btn');
+        const timerDisplay = document.getElementById('wait-timer');
+        const waitLimit = 30 * 60 * 1000; 
+
+        if(refundInterval) clearInterval(refundInterval);
+
+        refundInterval = setInterval(() => {
+            const elapsed = Date.now() - entryTime;
+            const remaining = waitLimit - elapsed;
+
+            if (remaining <= 0) {
+                refundBtn.style.display = 'block';
+                timerDisplay.innerText = "REFUND AVAILABLE";
+                clearInterval(refundInterval);
+            } else {
+                const mins = Math.floor(remaining / 60000);
+                const secs = Math.floor((remaining % 60000) / 1000);
+                timerDisplay.innerText = `REFUND ELIGIBLE IN: ${mins}M ${secs}S`;
+            }
+        }, 1000);
     }
 
     async function runRadar(myAddr) {
@@ -295,6 +327,8 @@
                 } else {
                     status.innerText = "LOBBY EMPTY: SEND ETH";
                     status.style.color = "#666";
+                    // If lobby is empty and we thought we were in, clear timer
+                    // localStorage.removeItem('arena_entry_time'); 
                 }
             } catch (err) { log("RPC Lag..."); }
         };
@@ -307,6 +341,11 @@
             const resultBox = document.getElementById('result-container');
             
             clearInterval(lobbyInterval);
+            clearInterval(refundInterval);
+            localStorage.removeItem('arena_entry_time'); // GAME OVER: Clear time
+            
+            document.getElementById('wait-timer').style.display = 'none';
+            document.getElementById('refund-btn').style.display = 'none';
             document.getElementById('radar-status').style.display = 'none';
             resultBox.innerHTML = ""; 
             
