@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEGEN DUEL | ARENA</title>
+    <title>APE ARENA | 0xF0bf</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root { 
@@ -87,6 +87,24 @@
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
+        /* RECENT ACTIVITY LOGS */
+        .history-container {
+            margin-top: 20px;
+            border-top: 4px solid var(--black);
+            padding-top: 15px;
+        }
+        .history-title { font-size: 0.7rem; margin-bottom: 10px; background: var(--lime); display: inline-block; padding: 2px 5px; }
+        .history-item {
+            font-family: monospace;
+            font-size: 0.6rem;
+            text-transform: none;
+            border-bottom: 1px solid #eee;
+            padding: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .win-tag { color: #008011; font-weight: bold; }
+
         .console-log {
             font-family: monospace;
             font-size: 0.5rem;
@@ -101,8 +119,8 @@
 
 <div class="container">
     <div class="card active" id="view-home">
-        <h1>DEGEN DUEL</h1>
-        <div class="subtitle">ARENA_v1.0.EXE</div>
+        <h1>APE ARENA</h1>
+        <div class="subtitle">DEGEN_FORK_v1.0.EXE</div>
         
         <div class="stake-option" onclick="watch('0.01')">
             <span>0.01 ETH</span>
@@ -133,6 +151,13 @@
             <div id="radar-status" class="status blink">INITIALIZING SENSORS...</div>
         </div>
 
+        <div class="history-container">
+            <div class="history-title">ARENA_LOGS</div>
+            <div id="activity-feed">
+                <div class="history-item">Scanning for past battles...</div>
+            </div>
+        </div>
+
         <button id="cancel-btn" class="btn btn-cancel" onclick="requestCancel()">ABANDON & REFUND</button>
         <button class="btn" style="background:#fff; margin-top:10px;" onclick="location.reload()">← BACK</button>
         
@@ -142,11 +167,9 @@
 
 <script>
     const ADDR = "0xF0bfEEEBEc3BEC4dA8388C00e50A337dd11b8B32";
-    // Using a robust public node for Sepolia
     const RPC = "https://ethereum-sepolia-rpc.publicnode.com"; 
     const provider = new ethers.providers.JsonRpcProvider(RPC);
     
-    // ABI supports both 'lobby' and 'pendingBets' naming conventions
     const abi = [
         "function pendingBets(uint256) view returns (address)",
         "function lobby(uint256) view returns (address)",
@@ -172,7 +195,49 @@
         document.getElementById('view-radar').classList.add('active');
         
         log(`Watching ${amt} ETH tier...`);
+        fetchHistory(); // Fetch past battles for this tier
         runRadar();
+    }
+
+    async function fetchHistory() {
+        const contract = new ethers.Contract(ADDR, abi, provider);
+        const feed = document.getElementById('activity-feed');
+        
+        try {
+            // Fetch last 500 blocks for efficiency
+            const filter = contract.filters.DuelResolved();
+            const events = await contract.queryFilter(filter, -500);
+            
+            feed.innerHTML = ""; // Clear loader
+
+            if(events.length === 0) {
+                feed.innerHTML = "<div class='history-item'>No recent battles found.</div>";
+                return;
+            }
+
+            // Display last 3 battles
+            events.reverse().slice(0, 3).forEach(event => {
+                const winner = event.args.winner;
+                const prize = ethers.utils.formatEther(event.args.prize);
+                addHistoryItem(winner, prize);
+            });
+        } catch (e) {
+            log("History fetch failed.");
+            feed.innerHTML = "<div class='history-item'>Arena log offline.</div>";
+        }
+    }
+
+    function addHistoryItem(winner, prize) {
+        const feed = document.getElementById('activity-feed');
+        const item = document.createElement('div');
+        item.className = "history-item";
+        item.innerHTML = `
+            <span>${winner.substring(0,6)}...${winner.substring(38)}</span>
+            <span class="win-tag">+${prize} ETH</span>
+        `;
+        // Keep list short
+        if (feed.children.length >= 3) feed.removeChild(feed.lastChild);
+        feed.prepend(item);
     }
 
     async function runRadar() {
@@ -182,26 +247,17 @@
         const checkLobby = async () => {
             try {
                 let player = ethers.constants.AddressZero;
-                
-                // Try 'pendingBets' first
-                try {
-                    player = await contract.pendingBets(selectedWei);
-                } catch(e) {
-                    // Fallback to 'lobby' if pendingBets fails
-                    try {
-                        player = await contract.lobby(selectedWei);
-                    } catch(e2) {
-                        log("Contract Error: Mapping not found.");
-                    }
+                try { player = await contract.pendingBets(selectedWei); } 
+                catch(e) { 
+                    try { player = await contract.lobby(selectedWei); } 
+                    catch(e2) { log("Contract Mapping Error."); }
                 }
 
                 if (player && player !== ethers.constants.AddressZero) {
                     status.innerText = "PLAYER DETECTED! WAITING FOR MATCH...";
                     status.style.color = "#000";
                     status.classList.add('blink');
-                    log(`In Lobby: ${player.substring(0,10)}...`);
                     
-                    // Show refund button only if user is logged in as the player
                     if (window.ethereum && window.ethereum.selectedAddress) {
                         if (player.toLowerCase() === window.ethereum.selectedAddress.toLowerCase()) {
                             document.getElementById('cancel-btn').style.display = 'block';
@@ -211,20 +267,16 @@
                     status.innerText = "LOBBY EMPTY: SEND ETH TO ENTER";
                     status.style.color = "#666";
                     status.classList.remove('blink');
-                    log("Searching blockchain...");
                 }
-            } catch (err) {
-                log("RPC Connection Lag...");
-            }
+            } catch (err) { log("RPC Connection Lag..."); }
         };
 
-        // Poll every 4 seconds
         checkLobby();
         lobbyInterval = setInterval(checkLobby, 4000);
 
-        // Instant event listener for the winner payout
         contract.on("DuelResolved", (winner, prize) => {
             log("Battle resolved!");
+            addHistoryItem(winner, ethers.utils.formatEther(prize));
             alert("BATTLE OVER!\nWINNER: " + winner);
             location.reload();
         });
@@ -243,18 +295,14 @@
             await tx.wait();
             alert("STAKE RETURNED!");
             location.reload();
-        } catch(e) {
-            alert("REFUND FAILED: Ensure you are the address currently in the lobby.");
-        }
+        } catch(e) { alert("REFUND FAILED."); }
     }
 
     function copyAddr() {
         navigator.clipboard.writeText(ADDR);
         const original = document.getElementById('radar-status').innerText;
         document.getElementById('radar-status').innerText = "ADDRESS COPIED!";
-        setTimeout(() => {
-            document.getElementById('radar-status').innerText = original;
-        }, 2000);
+        setTimeout(() => { document.getElementById('radar-status').innerText = original; }, 2000);
     }
 </script>
 </body>
