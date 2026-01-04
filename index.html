@@ -3,114 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEGEN P2P | SCAN & PLAY</title>
+    <title>DEGEN DUEL | THE ARENA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
-        :root { --bg: #000; --lime: #00FF19; --yellow: #FFFF00; --white: #fff; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; }
-        body { background: var(--bg); padding: 20px; color: var(--white); }
-        .container { max-width: 450px; margin: 0 auto; }
-        .card { background: var(--white); border: 5px solid var(--lime); padding: 25px; color: #000; box-shadow: 8px 8px 0px var(--lime); margin-bottom: 20px; }
-        input { width: 100%; padding: 15px; border: 4px solid #000; font-size: 0.9rem; margin-bottom: 10px; }
-        .btn { background: var(--yellow); border: 4px solid #000; padding: 15px; cursor: pointer; width: 100%; box-shadow: 4px 4px 0px #000; margin-bottom: 10px; }
+        :root {
+            --bg: #0a0a0a; --stone: #1a1a1a; --iron: #333;
+            --lime: #00FF19; --blood: #FF4500; --gold: #FFFF00;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; letter-spacing: 1px; }
+        body { background: var(--bg); color: white; display: flex; justify-content: center; padding: 20px; }
+        
+        .arena-container { width: 100%; max-width: 450px; }
+        
+        /* Gladiator Aesthetic */
+        .panel { 
+            background: var(--stone); border: 2px solid var(--iron); 
+            padding: 30px; position: relative; box-shadow: 10px 10px 0px #000;
+            margin-bottom: 25px;
+        }
+        .panel::before { content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border: 1px solid var(--iron); pointer-events: none; }
+
+        h1 { font-size: 2rem; color: var(--gold); text-shadow: 2px 2px 0px #000; margin-bottom: 20px; }
+        
+        input { 
+            width: 100%; background: #000; border: 1px solid var(--iron); 
+            padding: 15px; color: var(--lime); font-size: 1rem; margin-bottom: 10px; outline: none;
+        }
+
+        .btn { 
+            width: 100%; padding: 15px; border: none; cursor: pointer;
+            font-weight: bold; font-size: 1.1rem; transition: 0.2s;
+            margin-bottom: 10px; box-shadow: 4px 4px 0px #000;
+        }
+        .btn-gold { background: var(--gold); color: #000; }
+        .btn-outline { background: transparent; border: 1px solid var(--iron); color: white; }
         .btn:active { transform: translate(2px, 2px); box-shadow: none; }
-        .luck-meter { width: 100%; height: 25px; border: 3px solid #000; background: #ddd; margin: 10px 0; position: relative; }
-        #luck-bar { height: 100%; background: var(--lime); width: 0%; transition: 1.5s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
-        .lobby-screen { display: none; text-align: center; padding: 40px 20px; border: 6px solid var(--lime); background: #111; }
-        .copy-box { background: #000; color: var(--lime); padding: 10px; font-size: 0.7rem; word-break: break-all; margin: 10px 0; cursor: pointer; border: 2px dashed var(--lime); }
+
+        .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .stat-item { border: 1px solid var(--iron); padding: 10px; text-align: center; font-size: 0.8rem; }
+        
+        .luck-wrap { margin-top: 10px; }
+        .luck-bg { height: 10px; background: #000; border: 1px solid var(--iron); }
+        #luck-bar { height: 100%; background: var(--lime); width: 0%; transition: 2s; }
+
+        .warning { font-size: 0.65rem; color: var(--blood); margin-bottom: 10px; line-height: 1.4; }
+        .copy-box { background: #000; padding: 15px; border: 1px dashed var(--lime); color: var(--lime); font-size: 0.7rem; cursor: pointer; margin: 15px 0; word-break: break-all; }
+
+        .lobby-active { display: none; text-align: center; border: 2px solid var(--lime); padding: 40px 20px; background: #051405; }
+        .pulse { animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="container" id="main-app">
-    <div class="card" id="search-ui">
-        <h1 style="font-size: 2.5rem; line-height: 0.9; margin-bottom: 15px;">DEGEN<br>SCAN</h1>
-        <input type="text" id="address-input" placeholder="PASTE ADDRESS...">
-        <button class="btn" onclick="scanPlayer()">SCAN STATS</button>
+<div class="arena-container">
+    
+    <div class="panel" id="ui-entrance">
+        <h1>DEGEN DUEL</h1>
+        <p style="font-size: 0.7rem; color: #888; margin-bottom: 15px;">ENTER YOUR COMBATANT ADDRESS</p>
+        <input type="text" id="wallet-input" placeholder="0x... OR ENS">
+        <button class="btn btn-gold" onclick="enterArena()">LET'S DUEL</button>
     </div>
 
-    <div class="card" id="stats-ui" style="display: none;">
-        <p style="font-size: 0.7rem; color: #666;" id="player-addr"></p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-            <div style="border: 3px solid #000; padding: 10px;">WINS: <span id="w-count">0</span></div>
-            <div style="border: 3px solid #000; padding: 10px;">LOSS: <span id="l-count">0</span></div>
+    <div class="panel" id="ui-stats" style="display: none;">
+        <h2 id="display-addr" style="font-size: 0.7rem; color: var(--gold);">0x...</h2>
+        <div class="stat-row">
+            <div class="stat-item">VICTORIES<br><span id="val-wins" style="color: var(--lime); font-size: 1.2rem;">0</span></div>
+            <div class="stat-item">DEFEATS<br><span id="val-loss" style="color: var(--blood); font-size: 1.2rem;">0</span></div>
         </div>
-        <p style="margin-top: 15px; font-size: 0.8rem;">LUCK METER</p>
-        <div class="luck-meter"><div id="luck-bar"></div></div>
+        <div class="luck-wrap">
+            <p style="font-size: 0.6rem;">LUCK MAGNITUDE</p>
+            <div class="luck-bg"><div id="luck-bar"></div></div>
+        </div>
 
-        <hr style="margin: 20px 0; border: 1px solid #000;">
-        <h3 style="margin-bottom: 10px;">SELECT STAKE</h3>
-        <p style="font-size: 0.6rem; color: red; margin-bottom: 10px;">WARNING: ONLY SEND MULTIPLES OF 10 ($1, $10, $100...)</p>
+        <hr style="border: 0; border-top: 1px solid var(--iron); margin: 25px 0;">
+        
+        <h3>CHOOSE YOUR STAKE</h3>
+        <p class="warning">ARENA RULES: ONLY SEND MULTIPLES OF 10 ($1, $10, $100, $1000). ALL OTHER OFFERINGS WILL BE CONSUMED BY THE GODS (REJECTED).</p>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="btn" onclick="prepareDeposit(1)">$1</button>
-            <button class="btn" onclick="prepareDeposit(10)">$10</button>
-            <button class="btn" onclick="prepareDeposit(100)">$100</button>
-            <button class="btn" onclick="prepareDeposit(1000)">$1K</button>
+            <button class="btn btn-outline" onclick="selectStake(1)">$1 USDC</button>
+            <button class="btn btn-outline" onclick="selectStake(10)">$10 USDC</button>
+            <button class="btn btn-outline" onclick="selectStake(100)">$100 USDC</button>
+            <button class="btn btn-outline" onclick="selectStake(1000)">$1K USDC</button>
         </div>
     </div>
 
-    <div class="card" id="deposit-ui" style="display: none;">
-        <h2 id="amt-text">SEND $10 USDC</h2>
-        <p style="font-size: 0.7rem; margin-bottom: 10px;">TO THIS CONTRACT ADDRESS:</p>
-        <div class="copy-box" onclick="copyAddr()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
-        <p style="font-size: 0.6rem;">SITE IS WATCHING... DO NOT REFRESH.</p>
+    <div class="panel" id="ui-deposit" style="display: none;">
+        <h2 id="stake-label">SEND $10 USDC</h2>
+        <p style="font-size: 0.7rem; margin: 10px 0;">TO THE ARENA CONTRACT:</p>
+        <div class="copy-box" onclick="copyContract()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
+        <p class="pulse" style="font-size: 0.7rem; color: var(--lime);">ARENA RADAR ACTIVE. DO NOT REFRESH.</p>
     </div>
 
-    <div class="lobby-screen" id="lobby-ui">
-        <h1 id="status-msg" style="color: var(--lime); font-size: 2rem;">WAITING FOR MATCH...</h1>
-        <div id="loader" style="margin: 20px 0;">⏳</div>
+    <div class="panel lobby-active" id="ui-lobby">
+        <h1 id="lobby-status">IN LOBBY</h1>
+        <div id="result-area">
+            <p style="font-size: 0.8rem;">WAITING FOR AN OPPONENT TO CHALLENGE...</p>
+            <div class="pulse" style="font-size: 2rem; margin: 20px 0;">⚔️</div>
+        </div>
     </div>
+
 </div>
 
 <script>
     const CONTRACT = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28";
-    // Using a Public Sepolia RPC (You can replace with your Alchemy/Infura link)
-    const provider = new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/eth_sepolia");
+    const USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+    const RPC_URL = "https://rpc.ankr.com/eth_sepolia";
+    
+    const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+    const usdcContract = new ethers.Contract(USDC, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
+    const duelContract = new ethers.Contract(CONTRACT, ["event FlipResult(address indexed winner, address indexed loser, uint256 prize)"], provider);
 
-    function scanPlayer() {
-        const addr = document.getElementById('address-input').value;
-        if (addr.length < 40) return alert("Invalid Address");
-        
-        document.getElementById('player-addr').innerText = addr;
-        document.getElementById('search-ui').style.display = 'none';
-        document.getElementById('stats-ui').style.display = 'block';
+    let playerAddress = "";
 
-        // Mock Luck Calculation (In real app, fetch from FlipResult history)
-        const wins = Math.floor(Math.random() * 20);
-        const loss = Math.floor(Math.random() * 20);
-        document.getElementById('w-count').innerText = wins;
-        document.getElementById('l-count').innerText = loss;
-        document.getElementById('luck-bar').style.width = ((wins / (wins+loss)) * 100) + "%";
-    }
+    function enterArena() {
+        playerAddress = document.getElementById('wallet-input').value.trim();
+        if (!ethers.utils.isAddress(playerAddress)) return alert("INVALID ADDRESS");
 
-    function prepareDeposit(amt) {
-        document.getElementById('amt-text').innerText = `SEND $${amt} USDC`;
-        document.getElementById('stats-ui').style.display = 'none';
-        document.getElementById('deposit-ui').style.display = 'block';
-        
-        // Start watching for the transaction...
-        fakeWatch(); 
-    }
+        document.getElementById('display-addr').innerText = playerAddress;
+        document.getElementById('ui-entrance').style.display = 'none';
+        document.getElementById('ui-stats').style.display = 'block';
 
-    function fakeWatch() {
-        // This simulates the radar finding the money
+        // Fake Stats for UI (Could be pulled from FlipResult history later)
+        const w = Math.floor(Math.random() * 15);
+        const l = Math.floor(Math.random() * 15);
+        document.getElementById('val-wins').innerText = w;
+        document.getElementById('val-loss').innerText = l;
         setTimeout(() => {
-            document.getElementById('deposit-ui').style.display = 'none';
-            document.getElementById('lobby-ui').style.display = 'block';
-            
-            // Simulating a Win after 5 seconds
-            setTimeout(() => {
-                document.getElementById('status-msg').innerText = "YOU WIN!";
-                document.getElementById('status-msg').style.color = "var(--lime)";
-                document.getElementById('lobby-ui').style.borderColor = "var(--lime)";
-                document.getElementById('loader').innerHTML = `<button class="btn" onclick="location.reload()">CLAIM & PLAY AGAIN</button>`;
-            }, 5000);
-        }, 4000);
+            document.getElementById('luck-bar').style.width = ((w / (w + l)) * 100 || 50) + "%";
+        }, 100);
     }
 
-    function copyAddr() {
+    function selectStake(amt) {
+        document.getElementById('stake-label').innerText = `OFFER $${amt} USDC`;
+        document.getElementById('ui-stats').style.display = 'none';
+        document.getElementById('ui-deposit').style.display = 'block';
+        
+        watchForDeposit(amt);
+    }
+
+    function watchForDeposit(amt) {
+        const filter = usdcContract.filters.Transfer(playerAddress, CONTRACT);
+        
+        // Listen for the USDC Transfer
+        usdcContract.once(filter, (from, to, value) => {
+            const received = ethers.utils.formatUnits(value, 6);
+            if (parseFloat(received) == amt) {
+                enterLobby();
+            }
+        });
+    }
+
+    function enterLobby() {
+        document.getElementById('ui-deposit').style.display = 'none';
+        document.getElementById('ui-lobby').style.display = 'block';
+        
+        // Watch for Duel Results
+        duelContract.on("FlipResult", (winner, loser, prize) => {
+            if (winner.toLowerCase() === playerAddress.toLowerCase()) {
+                showFinal("VICTORY", "var(--lime)", prize);
+            } else if (loser.toLowerCase() === playerAddress.toLowerCase()) {
+                showFinal("DEFEATED", "var(--blood)", 0);
+            }
+        });
+    }
+
+    function showFinal(msg, color, prize) {
+        document.getElementById('lobby-status').innerText = msg;
+        document.getElementById('lobby-status').style.color = color;
+        const prizeText = prize > 0 ? `<p>PRIZE: ${ethers.utils.formatUnits(prize, 6)} USDC</p>` : "";
+        document.getElementById('result-area').innerHTML = `
+            ${prizeText}
+            <button class="btn btn-gold" onclick="location.reload()" style="margin-top:20px;">RE-ENTER ARENA</button>
+        `;
+    }
+
+    function copyContract() {
         navigator.clipboard.writeText(CONTRACT);
-        alert("COPIED!");
+        alert("COPIED TO CLIPBOARD");
     }
 </script>
 </body>
