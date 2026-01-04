@@ -18,7 +18,7 @@
         .btn { background: var(--yellow); border: 4px solid var(--black); padding: 15px; cursor: pointer; width: 100%; font-size: 1.2rem; box-shadow: 4px 4px 0px 0px var(--black); margin-bottom: 10px; transition: 0.1s; text-transform: uppercase; }
         .btn:active { transform: translate(2px, 2px); box-shadow: none; }
         .power-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        #status-log { background: #111; color: var(--lime); padding: 15px; font-family: monospace; font-size: 0.9rem; height: 150px; overflow-y: auto; border: 3px solid var(--lime); line-height: 1.5; }
+        #status-log { background: #111; color: var(--lime); padding: 15px; font-family: monospace; font-size: 0.9rem; height: 120px; overflow-y: auto; border: 3px solid var(--lime); line-height: 1.5; }
         .lobby-overlay { display: none; background: var(--lime); color: var(--black); padding: 20px; border: 4px solid var(--black); margin-top: 20px; text-align: center; }
     </style>
 </head>
@@ -55,7 +55,6 @@
 
     let signer, duelContract, usdcContract, currentStakeRaw;
 
-    // EXACT CONNECT LOGIC FROM YOUR WORKING VERSION
     async function connect() {
         if (!window.ethereum) return alert("Install MetaMask");
         const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -79,7 +78,7 @@
         document.getElementById('game-ui').style.opacity = "1";
         document.getElementById('game-ui').style.pointerEvents = "auto";
         
-        // Contracts
+        // Match the working ABI structure exactly
         duelContract = new ethers.Contract(CONTRACT_ADDRESS, [
             "function enterFiftyFifty(uint256 _amount) external",
             "function cancelFlip(uint256 _amount) external"
@@ -95,18 +94,15 @@
 
     async function play(amount) {
         if (!signer) return alert("Connect first");
-        currentStakeRaw = ethers.utils.parseUnits(amount.toString(), 6);
-        
         try {
-            updateLog(`>> CHECKING $${amount} ALLOWANCE...`);
-            const addr = await signer.getAddress();
-            const allowance = await usdcContract.allowance(addr, CONTRACT_ADDRESS);
+            currentStakeRaw = ethers.utils.parseUnits(amount.toString(), 6);
+            updateLog(">> CHECKING ALLOWANCE...");
             
+            const allowance = await usdcContract.allowance(await signer.getAddress(), CONTRACT_ADDRESS);
             if (allowance.lt(currentStakeRaw)) {
                 updateLog(">> APPROVING USDC...");
                 const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
                 await txA.wait();
-                updateLog(">> APPROVED.");
             }
 
             updateLog(">> ENTERING LOBBY...");
@@ -114,7 +110,7 @@
             await txS.wait();
             
             document.getElementById('lobby-view').style.display = 'block';
-            updateLog(`>> IN $${amount} LOBBY. WAITING...`);
+            updateLog(">> TX CONFIRMED! IN LOBBY.");
         } catch (e) {
             updateLog("!! ERROR: " + (e.reason || "FAILED"));
         }
@@ -134,9 +130,7 @@
     }
 
     function updateLog(msg) { 
-        document.getElementById('status-log').innerText += "\n> " + msg;
-        const log = document.getElementById('status-log');
-        log.scrollTop = log.scrollHeight;
+        document.getElementById('status-log').innerText = msg; 
     }
 </script>
 </body>
