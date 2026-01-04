@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEGEN FLIP | SEPOLIA</title>
+    <title>DEGEN FLIP | P2P SEPOLIA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
@@ -14,12 +14,29 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; }
         body { background-color: var(--bg); padding: 40px; color: var(--white); }
         .container { max-width: 600px; margin: 0 auto; }
+        
         .card { background: var(--white); border: 5px solid var(--lime); padding: 30px; box-shadow: var(--shadow); margin-bottom: 30px; color: var(--black); }
-        .btn { background: var(--yellow); border: 4px solid var(--black); padding: 15px; cursor: pointer; width: 100%; font-size: 1.2rem; box-shadow: 4px 4px 0px 0px var(--black); margin-bottom: 10px; transition: 0.1s; text-transform: uppercase; }
-        .btn:active { transform: translate(2px, 2px); box-shadow: none; }
+        
+        .btn { 
+            background: var(--yellow); border: 4px solid var(--black); padding: 15px; 
+            cursor: pointer; width: 100%; font-size: 1.2rem; box-shadow: 4px 4px 0px 0px var(--black); 
+            margin-bottom: 10px; transition: 0.1s; text-transform: uppercase;
+        }
+        .btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px 0px; }
+
         .power-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        #status-log { background: #111; color: var(--lime); padding: 15px; font-family: monospace; font-size: 0.9rem; height: 100px; overflow-y: auto; border: 3px solid var(--lime); line-height: 1.5; }
-        .lobby-overlay { display: none; background: var(--lime); color: var(--black); padding: 20px; border: 4px solid var(--black); margin-top: 20px; text-align: center; }
+        
+        #status-log { 
+            background: #111; color: var(--lime); padding: 15px; 
+            font-family: monospace; font-size: 0.9rem; height: 120px; 
+            overflow-y: auto; border: 3px solid var(--lime); line-height: 1.5;
+        }
+
+        .lobby-overlay {
+            display: none; background: var(--lime); color: var(--black);
+            padding: 20px; border: 4px solid var(--black); margin-top: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -27,7 +44,7 @@
 <div class="container">
     <div class="card">
         <h1 style="font-size: 3rem; letter-spacing: -2px;">DEGEN FLIP</h1>
-        <p style="font-size: 0.8rem; margin-bottom: 20px;">NETWORK: SEPOLIA</p>
+        <p style="font-size: 0.8rem; margin-bottom: 20px; color: #666;">P2P MATCHMAKING | SEPOLIA</p>
         <button class="btn" id="connect-btn" onclick="connect()">CONNECT WALLET</button>
     </div>
 
@@ -41,16 +58,16 @@
         </div>
 
         <div id="lobby-view" class="lobby-overlay">
-            <h3 id="lobby-text">IN LOBBY...</h3>
+            <h3 id="lobby-text">MATCHMAKING...</h3>
+            <p>DO NOT REFRESH</p>
             <button class="btn" style="background: var(--white); margin-top: 15px;" onclick="cancel()">QUIT & REFUND</button>
         </div>
     </div>
 
-    <div id="status-log">>> READY. CONNECT TO START.</div>
+    <div id="status-log">>> READY. CONNECT WALLET...</div>
 </div>
 
 <script>
-    // --- UPDATED ADDRESS ---
     const CONTRACT_ADDRESS = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28".toLowerCase(); 
     const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238".toLowerCase();
 
@@ -58,65 +75,90 @@
 
     async function connect() {
         if (!window.ethereum) return alert("Install MetaMask");
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        
-        const { chainId } = await provider.getNetwork();
-        if (chainId !== 11155111) {
-            await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: '0xaa36a7' }], 
-            });
-            location.reload();
-            return;
+        try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            
+            // Your working connection method
+            const accounts = await provider.send("eth_requestAccounts", []);
+            const addr = accounts[0];
+            
+            const { chainId } = await provider.getNetwork();
+            if (chainId !== 11155111) {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0xaa36a7' }], 
+                });
+                location.reload();
+                return;
+            }
+
+            signer = provider.getSigner();
+            
+            // Setup Contracts
+            duelContract = new ethers.Contract(CONTRACT_ADDRESS, [
+                "function enterFiftyFifty(uint256 _amount) external",
+                "function cancelFlip(uint256 _amount) external"
+            ], signer);
+
+            usdcContract = new ethers.Contract(USDC_ADDRESS, [
+                "function approve(address s, uint256 a) returns (bool)",
+                "function allowance(address o, address s) view returns (uint256)"
+            ], signer);
+
+            document.getElementById('connect-btn').innerText = addr.substring(0,8) + "...";
+            document.getElementById('connect-btn').style.background = "#00FF19";
+            document.getElementById('game-ui').style.opacity = "1";
+            document.getElementById('game-ui').style.pointerEvents = "auto";
+            
+            updateLog("SYSTEM ONLINE. WELCOME " + addr.substring(0,6));
+
+        } catch (e) { 
+            updateLog("BOOT ERROR. REFRESH PAGE.");
+            console.error(e);
         }
-
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        const addr = await signer.getAddress();
-        
-        document.getElementById('connect-btn').innerText = addr.substring(0,6) + "...";
-        document.getElementById('connect-btn').style.background = "#00FF19";
-        document.getElementById('game-ui').style.opacity = "1";
-        document.getElementById('game-ui').style.pointerEvents = "auto";
-        
-        duelContract = new ethers.Contract(CONTRACT_ADDRESS, [
-            "function enterFiftyFifty(uint256 _amount) external",
-            "function cancelFlip(uint256 _amount) external"
-        ], signer);
-
-        usdcContract = new ethers.Contract(USDC_ADDRESS, [
-            "function approve(address s, uint256 a) returns (bool)",
-            "function allowance(address o, address s) view returns (uint256)"
-        ], signer);
-        
-        updateLog("CONNECTED TO SEPOLIA");
     }
 
     async function play(amount) {
-        if (!signer) return alert("Connect first");
+        if (!signer) return alert("Connect Wallet First");
         try {
             currentStakeRaw = ethers.utils.parseUnits(amount.toString(), 6);
-            updateLog("CHECKING ALLOWANCE...");
+            const userAddr = await signer.getAddress();
             
-            const addr = await signer.getAddress();
-            const allowance = await usdcContract.allowance(addr, CONTRACT_ADDRESS);
+            updateLog("READING USDC ALLOWANCE...");
+            let allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
             
             if (allowance.lt(currentStakeRaw)) {
-                updateLog("APPROVING USDC...");
+                updateLog("ACTION REQUIRED: APPROVE USDC...");
                 const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
-                await txA.wait(); // Fixed: waits for confirmation before moving on
-                updateLog("APPROVED.");
+                
+                updateLog("TX SENT. MONITORING BLOCKCHAIN...");
+                
+                // POLLING: Check every 3 seconds manually if the approval is done
+                let isApproved = false;
+                while (!isApproved) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    updateLog("STILL WAITING FOR CONFIRMATION...");
+                    const newAllowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
+                    if (newAllowance.gte(currentStakeRaw)) {
+                        isApproved = true;
+                    }
+                }
+                updateLog("USDC APPROVED!");
+            } else {
+                updateLog("ALLOWANCE FOUND. SKIPPING APPROVAL.");
             }
 
-            updateLog("ENTERING LOBBY...");
+            updateLog("ACTION REQUIRED: JOIN LOBBY...");
             const txS = await duelContract.enterFiftyFifty(currentStakeRaw);
+            updateLog("STAKING " + amount + " USDC...");
             await txS.wait();
             
             document.getElementById('lobby-view').style.display = 'block';
             document.getElementById('lobby-text').innerText = "IN $" + amount + " LOBBY...";
-            updateLog("IN LOBBY. WAITING FOR MATCH.");
+            updateLog("ENTERED LOBBY. WAITING FOR MATCH.");
+
         } catch (e) {
-            updateLog("!! ERROR: " + (e.reason || "FAILED"));
+            updateLog("!! TRANSACTION FAILED. CHECK CONSOLE.");
             console.error(e);
         }
     }
@@ -124,17 +166,21 @@
     async function cancel() {
         if (!currentStakeRaw) return;
         try {
-            updateLog("REFUNDING...");
+            updateLog("INITIATING REFUND...");
             const tx = await duelContract.cancelFlip(currentStakeRaw);
             await tx.wait();
             document.getElementById('lobby-view').style.display = 'none';
-            updateLog("REFUNDED.");
+            updateLog("REFUNDED. LOBBY CLOSED.");
         } catch (e) {
-            updateLog("CANCEL FAILED");
+            updateLog("CANCEL FAILED.");
+            console.error(e);
         }
     }
 
-    function updateLog(msg) { document.getElementById('status-log').innerText = ">> " + msg; }
+    function updateLog(msg) {
+        const log = document.getElementById('status-log');
+        log.innerText = ">> " + msg;
+    }
 </script>
 </body>
 </html>
