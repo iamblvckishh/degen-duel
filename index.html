@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEGEN DUEL| THE ARENA</title>
+    <title>APE ARENA | 0x0eCe</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root { --bg: #ffffff; --black: #000000; --lime: #00FF19; --yellow: #FFFF00; --red: #FF3131; --shadow: 10px 10px 0px 0px var(--black); }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; }
         body { background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .container { width: 100%; max-width: 440px; padding: 20px; }
+        .container { width: 100%; max-width: 420px; padding: 20px; }
         .card { background: #fff; border: 5px solid var(--black); padding: 30px; box-shadow: var(--shadow); display: none; }
         .card.active { display: block; }
-        h1 { font-size: 2.5rem; letter-spacing: -2px; margin-bottom: 20px; line-height: 0.9; }
+        h1 { font-size: 2.2rem; letter-spacing: -2px; margin-bottom: 20px; line-height: 0.9; }
         .stake-option { display: flex; justify-content: space-between; align-items: center; border: 5px solid var(--black); padding: 15px; margin-bottom: 12px; cursor: pointer; background: #fff; transition: 0.1s; }
         .stake-option:hover { background: var(--lime); transform: translate(-3px, -3px); box-shadow: 5px 5px 0px var(--black); }
         .btn { width: 100%; padding: 15px; border: 5px solid var(--black); background: var(--yellow); font-weight: bold; cursor: pointer; box-shadow: 5px 5px 0px var(--black); margin-bottom: 10px; }
         .btn-withdraw { background: var(--red); color: white; display: none; margin-top: 20px; font-size: 0.8rem; }
-        .radar-box { background: #000; color: var(--lime); padding: 15px; font-size: 0.65rem; word-break: break-all; margin: 15px 0; border: 2px dashed var(--lime); cursor: copy; }
+        .radar-box { background: #000; color: var(--lime); padding: 15px; font-size: 0.6rem; word-break: break-all; margin: 15px 0; border: 2px dashed var(--lime); cursor: copy; text-align: center; }
         .status-msg { text-align: center; font-size: 0.8rem; font-weight: bold; margin-top: 10px; }
         .blinking { animation: blink 1s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
@@ -27,33 +27,32 @@
 
 <div class="container">
     <div class="card active" id="step-stake">
-        <h1>THE ARENA</h1>
-        <div class="stake-option" onclick="pickStake(1)"><span>$1 USDC</span> <span style="font-size:0.6rem;">READY</span></div>
-        <div class="stake-option" onclick="pickStake(10)"><span>$10 USDC</span> <span style="font-size:0.6rem;">HOT</span></div>
-        <div class="stake-option" onclick="pickStake(100)"><span>$100 USDC</span> <span style="font-size:0.6rem;">DEGEN</span></div>
+        <h1>APE ARENA</h1>
+        <p style="font-size: 0.7rem; margin-bottom: 15px;">SELECT STAKE & SEND ETH</p>
+        <div class="stake-option" onclick="pickStake('0.01')"><span>0.01 ETH</span> <span style="font-size:0.5rem;">READY</span></div>
+        <div class="stake-option" onclick="pickStake('0.05')"><span>0.05 ETH</span> <span style="font-size:0.5rem;">HOT</span></div>
+        <div class="stake-option" onclick="pickStake('0.1')"><span>0.10 ETH</span> <span style="font-size:0.5rem;">DEGEN</span></div>
     </div>
 
     <div class="card" id="step-radar">
-        <h1 id="reveal-amt">$0 DUEL</h1>
-        <p style="font-size:0.7rem;">SENDER: <span id="display-sender" style="color:blue;">DETECTING...</span></p>
-        <p style="font-size:0.6rem; margin-top:15px; opacity:0.7;">SEND USDC TO CONTRACT:</p>
-        <div class="radar-box" onclick="copyArena()">0x9AC6D3b25F65BA7109c520D78842BD7588486C86</div>
-        <div id="radar-status" class="status-msg blinking">RADAR SCANNING BLOCKCHAIN...</div>
+        <h1 id="reveal-amt">0.00 ETH</h1>
+        <p style="font-size:0.6rem; opacity:0.7;">SEND ETH TO CONTRACT:</p>
+        <div class="radar-box" id="contract-display" onclick="copyArena()">0x0eCe574a7C864c554A7AB98E8F2620bECBE952cd</div>
         
-        <button id="withdraw-btn" class="btn btn-withdraw" onclick="doWithdraw()">ONE-CLICK WITHDRAW</button>
+        <div id="radar-status" class="status-msg blinking">SCANNING BLOCKCHAIN...</div>
         
-        <button class="btn" style="margin-top:20px; background:#fff;" onclick="location.reload()">← ABANDON SCAN</button>
+        <button id="withdraw-btn" class="btn btn-withdraw" onclick="doWithdraw()">CANCEL & REFUND</button>
+        <button class="btn" style="margin-top:20px; background:#fff;" onclick="location.reload()">← BACK</button>
     </div>
 </div>
 
 <script>
-    const ARENA = "0x9AC6D3b25F65BA7109c520D78842BD7588486C86";
-    const USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+    const ARENA_ADDR = "0x0eCe574a7C864c554A7AB98E8F2620bECBE952cd";
     const RPC = "https://rpc.ankr.com/eth_sepolia";
     const provider = new ethers.providers.JsonRpcProvider(RPC);
 
-    let selectedStake = 0;
-    let userAddr = "";
+    let selectedStake = "0";
+    let lobbyWatcher = null;
 
     function navTo(id) {
         document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
@@ -62,72 +61,69 @@
 
     function pickStake(amt) {
         selectedStake = amt;
-        document.getElementById('reveal-amt').innerText = `$${amt} DUEL`;
+        document.getElementById('reveal-amt').innerText = `${amt} ETH DUEL`;
         navTo('step-radar');
         startRadar();
     }
 
     async function startRadar() {
-        const usdcContract = new ethers.Contract(USDC, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
-        const filter = usdcContract.filters.Transfer(null, ARENA);
-        
-        usdcContract.on(filter, (from, to, value) => {
-            const expectedValue = ethers.utils.parseUnits(selectedStake.toString(), 6);
-            if (value.eq(expectedValue)) {
-                userAddr = from;
-                document.getElementById('display-sender').innerText = from.substring(0,10) + "...";
-                checkLobbyStatus();
-            }
-        });
-    }
-
-    async function checkLobbyStatus() {
-        const arenaContract = new ethers.Contract(ARENA, [
+        const statusMsg = document.getElementById('radar-status');
+        const arenaContract = new ethers.Contract(ARENA_ADDR, [
             "function pendingBets(uint256) view returns (address)",
             "event BetResolved(address indexed winner, address indexed loser, uint256 amount)"
         ], provider);
 
-        const valInWei = ethers.utils.parseUnits(selectedStake.toString(), 6);
-        const pendingPlayer = await arenaContract.pendingBets(valInWei);
-        
-        if (pendingPlayer.toLowerCase() === userAddr.toLowerCase()) {
-            document.getElementById('radar-status').innerText = "YOU ARE IN LOBBY. WAITING FOR MATCH...";
-            document.getElementById('withdraw-btn').style.display = "block";
-        }
+        const stakeWei = ethers.utils.parseEther(selectedStake);
 
-        arenaContract.on("BetResolved", (winner, loser) => {
-            if (winner.toLowerCase() === userAddr.toLowerCase()) alert("VICTORY! FUNDS SENT.");
-            if (loser.toLowerCase() === userAddr.toLowerCase()) alert("DEFEAT.");
-            location.reload();
+        const checkLobby = async () => {
+            try {
+                const player = await arenaContract.pendingBets(stakeWei);
+                if (player !== ethers.constants.AddressZero) {
+                    statusMsg.innerText = `PLAYER IN LOBBY: ${player.substring(0,8)}...`;
+                    statusMsg.style.color = "#000";
+                    // If user has MetaMask, check if they are the one in lobby
+                    if (window.ethereum && window.ethereum.selectedAddress) {
+                        if (player.toLowerCase() === window.ethereum.selectedAddress.toLowerCase()) {
+                            document.getElementById('withdraw-btn').style.display = 'block';
+                            statusMsg.innerText = "YOU ARE IN THE LOBBY. WAITING...";
+                        }
+                    }
+                } else {
+                    statusMsg.innerText = "LOBBY EMPTY. SEND ETH TO JOIN.";
+                    statusMsg.style.color = "#666";
+                }
+            } catch (e) { console.error("Radar Error", e); }
+        };
+
+        checkLobby();
+        lobbyWatcher = setInterval(checkLobby, 4000);
+
+        arenaContract.on("BetResolved", (winner, loser, amount) => {
+            if (amount.eq(stakeWei)) {
+                clearInterval(lobbyWatcher);
+                alert(`DUEL COMPLETE!\nWINNER: ${winner}`);
+                location.reload();
+            }
         });
     }
 
     async function doWithdraw() {
-        if (!window.ethereum) return alert("Install MetaMask");
-        
+        if (!window.ethereum) return alert("Connect Wallet for Refund");
+        const browserProvider = new ethers.providers.Web3Provider(window.ethereum);
+        await browserProvider.send("eth_requestAccounts", []);
+        const signer = browserProvider.getSigner();
+        const contract = new ethers.Contract(ARENA_ADDR, ["function cancelBet(uint256 amount)"], signer);
         try {
-            const browserProvider = new ethers.providers.Web3Provider(window.ethereum);
-            await browserProvider.send("eth_requestAccounts", []);
-            const signer = browserProvider.getSigner();
-            
-            const arenaWithSigner = new ethers.Contract(ARENA, [
-                "function cancelBet(uint256 amount)"
-            ], signer);
-
-            const valInWei = ethers.utils.parseUnits(selectedStake.toString(), 6);
-            const tx = await arenaWithSigner.cancelBet(valInWei);
-            document.getElementById('radar-status').innerText = "WITHDRAWING...";
+            const tx = await contract.cancelBet(ethers.utils.parseEther(selectedStake));
             await tx.wait();
             alert("STAKE RETURNED!");
             location.reload();
-        } catch (err) {
-            alert("WITHDRAWAL FAILED: " + err.reason);
-        }
+        } catch (e) { alert("ERROR: Check if you are the current lobby holder."); }
     }
 
     function copyArena() {
-        navigator.clipboard.writeText(ARENA);
-        alert("CONTRACT COPIED");
+        navigator.clipboard.writeText(ARENA_ADDR);
+        alert("ADDRESS COPIED");
     }
 </script>
 </body>
