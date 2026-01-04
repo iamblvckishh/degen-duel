@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APE ARENA | 0xF0bf</title>
+    <title>DEGEN DUEL | ARENA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root { 
@@ -87,11 +87,12 @@
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
-        /* RECENT ACTIVITY LOGS */
+        /* RECENT ACTIVITY SECTION */
         .history-container {
             margin-top: 20px;
             border-top: 4px solid var(--black);
             padding-top: 15px;
+            text-align: left;
         }
         .history-title { font-size: 0.7rem; margin-bottom: 10px; background: var(--lime); display: inline-block; padding: 2px 5px; }
         .history-item {
@@ -99,7 +100,7 @@
             font-size: 0.6rem;
             text-transform: none;
             border-bottom: 1px solid #eee;
-            padding: 5px 0;
+            padding: 8px 0;
             display: flex;
             justify-content: space-between;
         }
@@ -119,8 +120,8 @@
 
 <div class="container">
     <div class="card active" id="view-home">
-        <h1>APE ARENA</h1>
-        <div class="subtitle">DEGEN_FORK_v1.0.EXE</div>
+        <h1>DEGEN DUEL</h1>
+        <div class="subtitle">ARENA_v1.0.EXE</div>
         
         <div class="stake-option" onclick="watch('0.01')">
             <span>0.01 ETH</span>
@@ -152,9 +153,9 @@
         </div>
 
         <div class="history-container">
-            <div class="history-title">ARENA_LOGS</div>
+            <div class="history-title">RECENT_BATTLES</div>
             <div id="activity-feed">
-                <div class="history-item">Scanning for past battles...</div>
+                <div class="history-item">Scanning logs...</div>
             </div>
         </div>
 
@@ -186,6 +187,49 @@
         console.log(msg);
     }
 
+    // Fetches the last 3 duel results from the blockchain
+    async function fetchHistory() {
+        const contract = new ethers.Contract(ADDR, abi, provider);
+        const feed = document.getElementById('activity-feed');
+        
+        try {
+            const filter = contract.filters.DuelResolved();
+            // Look back 1000 blocks
+            const events = await contract.queryFilter(filter, -1000);
+            
+            feed.innerHTML = ""; // Clear loader
+
+            if(events.length === 0) {
+                feed.innerHTML = "<div class='history-item'>No recent duels found.</div>";
+                return;
+            }
+
+            events.reverse().slice(0, 3).forEach(event => {
+                addHistoryItem(event.args.winner, event.args.prize);
+            });
+        } catch (e) {
+            log("Log search failed.");
+            feed.innerHTML = "<div class='history-item'>Logs temporarily offline.</div>";
+        }
+    }
+
+    // Adds a single line to the activity feed
+    function addHistoryItem(winner, prize) {
+        const feed = document.getElementById('activity-feed');
+        if(feed.innerText.includes("Scanning") || feed.innerText.includes("No recent")) feed.innerHTML = "";
+        
+        const item = document.createElement('div');
+        item.className = "history-item";
+        const displayPrize = ethers.utils.formatEther(prize);
+        item.innerHTML = `
+            <span>${winner.substring(0,6)}...${winner.substring(38)}</span>
+            <span class="win-tag">+${displayPrize} ETH</span>
+        `;
+        
+        if (feed.children.length >= 3) feed.removeChild(feed.lastChild);
+        feed.prepend(item);
+    }
+
     function watch(amt) {
         if(lobbyInterval) clearInterval(lobbyInterval);
         
@@ -195,49 +239,8 @@
         document.getElementById('view-radar').classList.add('active');
         
         log(`Watching ${amt} ETH tier...`);
-        fetchHistory(); // Fetch past battles for this tier
+        fetchHistory(); // Run once on load
         runRadar();
-    }
-
-    async function fetchHistory() {
-        const contract = new ethers.Contract(ADDR, abi, provider);
-        const feed = document.getElementById('activity-feed');
-        
-        try {
-            // Fetch last 500 blocks for efficiency
-            const filter = contract.filters.DuelResolved();
-            const events = await contract.queryFilter(filter, -500);
-            
-            feed.innerHTML = ""; // Clear loader
-
-            if(events.length === 0) {
-                feed.innerHTML = "<div class='history-item'>No recent battles found.</div>";
-                return;
-            }
-
-            // Display last 3 battles
-            events.reverse().slice(0, 3).forEach(event => {
-                const winner = event.args.winner;
-                const prize = ethers.utils.formatEther(event.args.prize);
-                addHistoryItem(winner, prize);
-            });
-        } catch (e) {
-            log("History fetch failed.");
-            feed.innerHTML = "<div class='history-item'>Arena log offline.</div>";
-        }
-    }
-
-    function addHistoryItem(winner, prize) {
-        const feed = document.getElementById('activity-feed');
-        const item = document.createElement('div');
-        item.className = "history-item";
-        item.innerHTML = `
-            <span>${winner.substring(0,6)}...${winner.substring(38)}</span>
-            <span class="win-tag">+${prize} ETH</span>
-        `;
-        // Keep list short
-        if (feed.children.length >= 3) feed.removeChild(feed.lastChild);
-        feed.prepend(item);
     }
 
     async function runRadar() {
@@ -248,15 +251,16 @@
             try {
                 let player = ethers.constants.AddressZero;
                 try { player = await contract.pendingBets(selectedWei); } 
-                catch(e) { 
+                catch(e) {
                     try { player = await contract.lobby(selectedWei); } 
-                    catch(e2) { log("Contract Mapping Error."); }
+                    catch(e2) { log("Mapping error."); }
                 }
 
                 if (player && player !== ethers.constants.AddressZero) {
                     status.innerText = "PLAYER DETECTED! WAITING FOR MATCH...";
                     status.style.color = "#000";
                     status.classList.add('blink');
+                    log(`Lobby: ${player.substring(0,10)}...`);
                     
                     if (window.ethereum && window.ethereum.selectedAddress) {
                         if (player.toLowerCase() === window.ethereum.selectedAddress.toLowerCase()) {
@@ -267,6 +271,7 @@
                     status.innerText = "LOBBY EMPTY: SEND ETH TO ENTER";
                     status.style.color = "#666";
                     status.classList.remove('blink');
+                    log("Searching blockchain...");
                 }
             } catch (err) { log("RPC Connection Lag..."); }
         };
@@ -276,7 +281,7 @@
 
         contract.on("DuelResolved", (winner, prize) => {
             log("Battle resolved!");
-            addHistoryItem(winner, ethers.utils.formatEther(prize));
+            addHistoryItem(winner, prize); // Live update feed
             alert("BATTLE OVER!\nWINNER: " + winner);
             location.reload();
         });
