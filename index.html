@@ -3,36 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEGEN DUEL | THE ARENA</title>
+    <title>DEGEN DUEL | P2P ARENA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
-            --bg: #ffffff; --black: #000000; --lime: #00FF19; --yellow: #FFFF00;
+            --bg: #ffffff;
+            --black: #000000;
+            --lime: #00FF19;
+            --yellow: #FFFF00;
+            --blue: #0000FF;
             --shadow: 10px 10px 0px 0px var(--black);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; }
-        body { background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        
-        .container { width: 100%; max-width: 440px; padding: 20px; }
-        .card { background: #fff; border: 5px solid var(--black); padding: 30px; box-shadow: var(--shadow); display: none; position: relative; }
-        .card.active { display: block; }
 
-        h1 { font-size: 2.5rem; letter-spacing: -2px; margin-bottom: 20px; line-height: 0.9; }
-        .stake-option { display: flex; justify-content: space-between; align-items: center; border: 5px solid var(--black); padding: 15px; margin-bottom: 12px; cursor: pointer; background: #fff; transition: 0.1s; }
-        .stake-option:hover { background: var(--lime); transform: translate(-3px, -3px); box-shadow: 5px 5px 0px var(--black); }
-        
-        input { width: 100%; padding: 15px; border: 5px solid var(--black); margin-bottom: 15px; font-size: 1rem; outline: none; }
-        .btn { width: 100%; padding: 15px; border: 5px solid var(--black); background: var(--yellow); font-weight: bold; cursor: pointer; box-shadow: 5px 5px 0px var(--black); margin-bottom: 10px; }
-        .btn:active { transform: translate(2px, 2px); box-shadow: none; }
-        
-        .back-btn { font-size: 0.7rem; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-top: 10px; border: none; background: none; width: 100%; }
-        
-        #profile-trigger { position: fixed; top: 20px; right: 20px; border: 4px solid var(--black); padding: 10px; background: var(--lime); cursor: pointer; font-size: 0.8rem; box-shadow: 5px 5px 0px var(--black); display: none; z-index: 1000; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Black', sans-serif;
+            text-transform: uppercase;
+        }
 
-        .radar-box { background: #000; color: var(--lime); padding: 15px; font-size: 0.65rem; word-break: break-all; margin: 15px 0; cursor: pointer; border: 2px dashed var(--lime); }
-        .status-msg { text-align: center; font-size: 0.8rem; font-weight: bold; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
-        .scanning { animation: blink 1s infinite; color: blue; }
+        body {
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+        }
+
+        /* Neo-Brutalist Cards */
+        .card {
+            background: #fff;
+            border: 5px solid var(--black);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            display: none;
+            position: relative;
+        }
+
+        .card.active {
+            display: block;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            letter-spacing: -2px;
+            margin-bottom: 20px;
+            line-height: 0.9;
+        }
+
+        .stake-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 5px solid var(--black);
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            background: #fff;
+            transition: 0.1s;
+        }
+
+        .stake-option:hover {
+            background: var(--lime);
+            transform: translate(-3px, -3px);
+            box-shadow: 5px 5px 0px var(--black);
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 5px solid var(--black);
+            margin-bottom: 15px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: 5px solid var(--black);
+            background: var(--yellow);
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 5px 5px 0px var(--black);
+            margin-bottom: 10px;
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .back-btn {
+            font-size: 0.7rem;
+            text-decoration: underline;
+            cursor: pointer;
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            border: none;
+            background: none;
+            width: 100%;
+        }
+
+        #profile-trigger {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            border: 4px solid var(--black);
+            padding: 10px;
+            background: var(--lime);
+            cursor: pointer;
+            font-size: 0.8rem;
+            box-shadow: 5px 5px 0px var(--black);
+            display: none;
+            z-index: 1000;
+        }
+
+        .radar-box {
+            background: #000;
+            color: var(--lime);
+            padding: 15px;
+            font-size: 0.65rem;
+            word-break: break-all;
+            margin: 15px 0;
+            cursor: pointer;
+            border: 2px dashed var(--lime);
+        }
+
+        .status-msg {
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.2; }
+            100% { opacity: 1; }
+        }
+
+        .scanning {
+            animation: blink 1s infinite;
+            color: var(--blue);
+        }
     </style>
 </head>
 <body>
@@ -43,7 +166,7 @@
     <div class="card active" id="step-stake">
         <h1>CHOOSE<br>STAKE</h1>
         <div class="stake-option" onclick="pickStake(1)"><span>$1 USDC</span> <span style="font-size:0.6rem;">READY</span></div>
-        <div class="stake-option" onclick="pickStake(10)"><span>$10 USDC</span> <span style="font-size:0.6rem;">HOT</span></div>
+        <div class="stake-option" onclick="pickStake(10)"><span>$10 USDC</span> <span style="font-size:0.6rem;">ACTIVE</span></div>
         <div class="stake-option" onclick="pickStake(100)"><span>$100 USDC</span> <span style="font-size:0.6rem;">DEGEN</span></div>
         <div class="stake-option" onclick="pickStake(1000)"><span>$1K USDC</span> <span style="font-size:0.6rem;">WHALE</span></div>
     </div>
@@ -52,24 +175,25 @@
         <h1>LOGIN</h1>
         <input type="text" id="login-input" placeholder="WALLET ADDR / ENS">
         <button class="btn" onclick="doLogin()">ENTER ARENA</button>
-        <button class="back-btn" onclick="navTo('step-stake')">← BACK</button>
+        <button class="back-btn" onclick="navTo('step-stake')">← BACK TO STAKES</button>
     </div>
 
     <div class="card" id="step-sender">
         <h1>SENDER?</h1>
         <button class="btn" id="use-login-btn" onclick="setSender('login')">USE LOGIN WALLET</button>
         <p style="text-align:center; margin:10px 0; font-size:0.8rem;">-- OR --</p>
-        <input type="text" id="alt-sender" placeholder="OTHER SENDER ADDR">
+        <input type="text" id="alt-sender" placeholder="PASTE SENDER ADDR">
         <button class="btn" style="background:#fff" onclick="setSender('alt')">USE THIS</button>
         <button class="back-btn" onclick="navTo('step-login')">← BACK</button>
     </div>
 
     <div class="card" id="step-reveal">
         <h1 id="reveal-amt">$0 DUEL</h1>
-        <p style="font-size:0.7rem;">SENDER: <span id="display-sender" style="color:blue;">0x...</span></p>
+        <p style="font-size:0.7rem;">SENDER: <span id="display-sender" style="color:var(--blue);">0x...</span></p>
         <p style="font-size:0.7rem; margin-top:15px;">SEND TO ARENA CONTRACT:</p>
         <div class="radar-box" onclick="copyArena()">0x9AC6D3b25F65BA7109c520D78842BD7588486C86</div>
-        <div class="status-msg scanning">RADAR SCANNING BLOCKCHAIN...</div>
+        <div id="radar-status" class="status-msg scanning">RADAR SCANNING...</div>
+        <button class="back-btn" onclick="navTo('step-sender')">← CHANGE WALLET</button>
     </div>
 
     <div class="card" id="modal-profile" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:100;">
@@ -96,12 +220,15 @@
         document.getElementById(id).classList.add('active');
     }
 
-    function pickStake(amt) { selectedStake = amt; navTo('step-login'); }
+    function pickStake(amt) {
+        selectedStake = amt;
+        navTo('step-login');
+    }
 
     async function doLogin() {
         const val = document.getElementById('login-input').value.trim();
         if(!val) return;
-        loginUser = val; // ENS resolution logic would go here
+        loginUser = val;
         document.getElementById('use-login-btn').innerText = `USE ${loginUser.substring(0,8)}...`;
         document.getElementById('profile-trigger').style.display = 'block';
         navTo('step-sender');
@@ -109,7 +236,7 @@
 
     function setSender(type) {
         finalSender = (type === 'login') ? loginUser : document.getElementById('alt-sender').value.trim();
-        if(!ethers.utils.isAddress(finalSender)) return alert("INVALID ADDR");
+        if(!ethers.utils.isAddress(finalSender)) return alert("INVALID ADDRESS");
         
         document.getElementById('reveal-amt').innerText = `$${selectedStake} DUEL`;
         document.getElementById('display-sender').innerText = finalSender;
@@ -117,15 +244,44 @@
         initRadar();
     }
 
-    function initRadar() {
-        const usdcInterface = new ethers.Contract(USDC, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
-        const filter = usdcInterface.filters.Transfer(finalSender, ARENA);
+    // --- ACTIVE HUNTER LOGIC ---
+    async function initRadar() {
+        const statusMsg = document.getElementById('radar-status');
+        statusMsg.innerText = "SEARCHING RECENT HISTORY...";
+        statusMsg.className = "status-msg scanning";
 
-        usdcInterface.once(filter, (from, to, value) => {
-            document.querySelector('.status-msg').innerText = "USDC RECEIVED! WAITING FOR MATCH...";
-            document.querySelector('.status-msg').style.color = "green";
-            watchForOutcome();
-        });
+        try {
+            const expectedValue = ethers.utils.parseUnits(selectedStake.toString(), 6);
+            const usdcInterface = new ethers.Contract(USDC, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
+            const filter = usdcInterface.filters.Transfer(finalSender, ARENA);
+
+            // 1. Scan History (last 100 blocks ~20 mins)
+            const currentBlock = await provider.getBlockNumber();
+            const logs = await usdcInterface.queryFilter(filter, currentBlock - 100, currentBlock);
+            
+            const found = logs.find(log => log.args.value.eq(expectedValue));
+
+            if (found) {
+                statusMsg.innerText = "MATCH FOUND! WAITING FOR DUEL RESULT...";
+                statusMsg.style.color = "green";
+                statusMsg.className = "status-msg";
+                watchForOutcome();
+            } else {
+                // 2. Listen Live
+                statusMsg.innerText = "NOT FOUND IN HISTORY. SCANNING LIVE...";
+                usdcInterface.once(filter, (from, to, value) => {
+                    if (value.eq(expectedValue)) {
+                        statusMsg.innerText = "LIVE TRANSFER DETECTED! WAITING FOR RESULT...";
+                        statusMsg.style.color = "green";
+                        statusMsg.className = "status-msg";
+                        watchForOutcome();
+                    }
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            statusMsg.innerText = "RADAR ERROR. REFRESH PAGE.";
+        }
     }
 
     function watchForOutcome() {
@@ -146,7 +302,10 @@
         document.getElementById('prof-addr').innerText = loginUser;
     }
 
-    function copyArena() { navigator.clipboard.writeText(ARENA); alert("ARENA COPIED"); }
+    function copyArena() {
+        navigator.clipboard.writeText(ARENA);
+        alert("ARENA ADDRESS COPIED");
+    }
 </script>
 </body>
 </html>
