@@ -8,25 +8,31 @@
     <style>
         :root {
             --bg: #ffffff; --black: #000000; --lime: #00FF19; --yellow: #FFFF00;
-            --shadow: 8px 8px 0px 0px var(--black);
+            --shadow: 10px 10px 0px 0px var(--black);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; }
         body { background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .container { width: 100%; max-width: 440px; padding: 20px; position: relative; }
-        .card { background: #fff; border: 4px solid var(--black); padding: 30px; box-shadow: var(--shadow); display: none; }
+        
+        .container { width: 100%; max-width: 440px; padding: 20px; }
+        .card { background: #fff; border: 5px solid var(--black); padding: 30px; box-shadow: var(--shadow); display: none; position: relative; }
         .card.active { display: block; }
-        h1 { font-size: 2.2rem; letter-spacing: -2px; margin-bottom: 20px; line-height: 0.9; }
-        .stake-option { display: flex; justify-content: space-between; align-items: center; border: 4px solid var(--black); padding: 15px; margin-bottom: 12px; cursor: pointer; transition: 0.1s; background: #fff; }
-        .stake-option:hover { background: var(--lime); transform: translate(-2px, -2px); box-shadow: 4px 4px 0px 0px var(--black); }
-        .waiting-count { font-size: 0.7rem; background: var(--black); color: #fff; padding: 2px 6px; }
-        input { width: 100%; padding: 15px; border: 4px solid var(--black); margin-bottom: 15px; font-size: 1rem; outline: none; }
-        .btn { width: 100%; padding: 15px; border: 4px solid var(--black); background: var(--yellow); font-weight: bold; cursor: pointer; box-shadow: 4px 4px 0px 0px var(--black); margin-bottom: 10px; }
+
+        h1 { font-size: 2.5rem; letter-spacing: -2px; margin-bottom: 20px; line-height: 0.9; }
+        .stake-option { display: flex; justify-content: space-between; align-items: center; border: 5px solid var(--black); padding: 15px; margin-bottom: 12px; cursor: pointer; background: #fff; transition: 0.1s; }
+        .stake-option:hover { background: var(--lime); transform: translate(-3px, -3px); box-shadow: 5px 5px 0px var(--black); }
+        
+        input { width: 100%; padding: 15px; border: 5px solid var(--black); margin-bottom: 15px; font-size: 1rem; outline: none; }
+        .btn { width: 100%; padding: 15px; border: 5px solid var(--black); background: var(--yellow); font-weight: bold; cursor: pointer; box-shadow: 5px 5px 0px var(--black); margin-bottom: 10px; }
         .btn:active { transform: translate(2px, 2px); box-shadow: none; }
-        .back-link { font-size: 0.7rem; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-top: 10px; }
-        #profile-trigger { position: fixed; top: 20px; right: 20px; border: 3px solid var(--black); padding: 8px 12px; background: var(--lime); cursor: pointer; font-size: 0.7rem; box-shadow: 4px 4px 0px 0px var(--black); display: none; }
-        .radar-box { background: #000; color: var(--lime); padding: 15px; font-size: 0.6rem; word-break: break-all; margin-bottom: 10px; cursor: pointer; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-        .blinking { animation: blink 1s infinite; }
+        
+        .back-btn { font-size: 0.7rem; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-top: 10px; border: none; background: none; width: 100%; }
+        
+        #profile-trigger { position: fixed; top: 20px; right: 20px; border: 4px solid var(--black); padding: 10px; background: var(--lime); cursor: pointer; font-size: 0.8rem; box-shadow: 5px 5px 0px var(--black); display: none; z-index: 1000; }
+
+        .radar-box { background: #000; color: var(--lime); padding: 15px; font-size: 0.65rem; word-break: break-all; margin: 15px 0; cursor: pointer; border: 2px dashed var(--lime); }
+        .status-msg { text-align: center; font-size: 0.8rem; font-weight: bold; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
+        .scanning { animation: blink 1s infinite; color: blue; }
     </style>
 </head>
 <body>
@@ -35,99 +41,100 @@
 
 <div class="container">
     <div class="card active" id="step-stake">
-        <h1>STAKE AMOUNT</h1>
-        <div class="stake-option" onclick="selectStake(1)"><span>$1 USDC</span> <span class="waiting-count">ACTIVE</span></div>
-        <div class="stake-option" onclick="selectStake(10)"><span>$10 USDC</span> <span class="waiting-count">ACTIVE</span></div>
-        <div class="stake-option" onclick="selectStake(100)"><span>$100 USDC</span> <span class="waiting-count">QUIET</span></div>
-        <div class="stake-option" onclick="selectStake(1000)"><span>$1K USDC</span> <span class="waiting-count">ELITE</span></div>
+        <h1>CHOOSE<br>STAKE</h1>
+        <div class="stake-option" onclick="pickStake(1)"><span>$1 USDC</span> <span style="font-size:0.6rem;">READY</span></div>
+        <div class="stake-option" onclick="pickStake(10)"><span>$10 USDC</span> <span style="font-size:0.6rem;">HOT</span></div>
+        <div class="stake-option" onclick="pickStake(100)"><span>$100 USDC</span> <span style="font-size:0.6rem;">DEGEN</span></div>
+        <div class="stake-option" onclick="pickStake(1000)"><span>$1K USDC</span> <span style="font-size:0.6rem;">WHALE</span></div>
     </div>
 
     <div class="card" id="step-login">
-        <h1>IDENTIFY</h1>
-        <input type="text" id="wallet-input" placeholder="0x... OR .ETH">
+        <h1>LOGIN</h1>
+        <input type="text" id="login-input" placeholder="WALLET ADDR / ENS">
         <button class="btn" onclick="doLogin()">ENTER ARENA</button>
-        <span class="back-link" onclick="showStep('step-stake')">BACK</span>
+        <button class="back-btn" onclick="navTo('step-stake')">← BACK</button>
     </div>
 
-    <div class="card" id="step-wallet">
+    <div class="card" id="step-sender">
         <h1>SENDER?</h1>
-        <button class="btn" id="login-wallet-btn" onclick="setSender('login')">USE LOGIN WALLET</button>
-        <p style="text-align:center; font-size:0.8rem; margin:10px 0;">-- OR --</p>
-        <input type="text" id="alt-wallet" placeholder="OTHER ADDRESS">
+        <button class="btn" id="use-login-btn" onclick="setSender('login')">USE LOGIN WALLET</button>
+        <p style="text-align:center; margin:10px 0; font-size:0.8rem;">-- OR --</p>
+        <input type="text" id="alt-sender" placeholder="OTHER SENDER ADDR">
         <button class="btn" style="background:#fff" onclick="setSender('alt')">USE THIS</button>
+        <button class="back-btn" onclick="navTo('step-login')">← BACK</button>
     </div>
 
     <div class="card" id="step-reveal">
-        <h1 id="final-stake">DUEL</h1>
-        <p style="font-size:0.7rem; margin-bottom:5px;">SENDER: <span id="display-sender" style="color:blue"></span></p>
-        <p style="font-size:0.7rem; margin-bottom:10px;">TARGET ARENA:</p>
-        <div class="radar-box" onclick="copyAddr()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
-        <p class="blinking" style="text-align:center; font-size:0.7rem;">ARENA RADAR ACTIVE...</p>
+        <h1 id="reveal-amt">$0 DUEL</h1>
+        <p style="font-size:0.7rem;">SENDER: <span id="display-sender" style="color:blue;">0x...</span></p>
+        <p style="font-size:0.7rem; margin-top:15px;">SEND TO ARENA CONTRACT:</p>
+        <div class="radar-box" onclick="copyArena()">0x9AC6D3b25F65BA7109c520D78842BD7588486C86</div>
+        <div class="status-msg scanning">RADAR SCANNING BLOCKCHAIN...</div>
     </div>
 
     <div class="card" id="modal-profile" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:100;">
-        <h1>STATS</h1>
-        <p id="p-addr" style="font-size:0.6rem; margin-bottom:15px;"></p>
-        <div style="border:4px solid #000; padding:10px; margin-bottom:10px;">WINS: <span id="p-wins">0</span></div>
-        <div style="border:4px solid #000; padding:10px; margin-bottom:10px;">LOSS: <span id="p-loss">0</span></div>
+        <h1>PROFILE</h1>
+        <p id="prof-addr" style="font-size:0.6rem; margin-bottom:15px; word-break:break-all;"></p>
+        <div style="border:5px solid #000; padding:15px; margin-bottom:10px;">WINS: <span id="wins">0</span></div>
+        <div style="border:5px solid #000; padding:15px; margin-bottom:10px;">LOSS: <span id="loss">0</span></div>
         <button class="btn" onclick="toggleProfile()">CLOSE</button>
     </div>
 </div>
 
 <script>
-    const ARENA = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28";
+    const ARENA = "0x9AC6D3b25F65BA7109c520D78842BD7588486C86";
     const USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
     const RPC = "https://rpc.ankr.com/eth_sepolia";
     const provider = new ethers.providers.JsonRpcProvider(RPC);
 
-    let currentStake = 0;
-    let userLogin = "";
-    let senderAddr = "";
+    let selectedStake = 0;
+    let loginUser = "";
+    let finalSender = "";
 
-    function showStep(id) {
+    function navTo(id) {
         document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
-    function selectStake(amt) { currentStake = amt; showStep('step-login'); }
+    function pickStake(amt) { selectedStake = amt; navTo('step-login'); }
 
     async function doLogin() {
-        const input = document.getElementById('wallet-input').value.trim();
-        if(!input) return;
-        try {
-            // Simple check: if ends in .eth, would need mainnet provider to resolve
-            userLogin = input; // For Sepolia dev, assuming address is pasted
-            document.getElementById('login-wallet-btn').innerText = `USE ${userLogin.substring(0,6)}...`;
-            document.getElementById('profile-trigger').style.display = 'block';
-            showStep('step-wallet');
-        } catch(e) { alert("ERROR"); }
+        const val = document.getElementById('login-input').value.trim();
+        if(!val) return;
+        loginUser = val; // ENS resolution logic would go here
+        document.getElementById('use-login-btn').innerText = `USE ${loginUser.substring(0,8)}...`;
+        document.getElementById('profile-trigger').style.display = 'block';
+        navTo('step-sender');
     }
 
     function setSender(type) {
-        senderAddr = (type === 'login') ? userLogin : document.getElementById('alt-wallet').value.trim();
-        document.getElementById('final-stake').innerText = `$${currentStake} DUEL`;
-        document.getElementById('display-sender').innerText = senderAddr.substring(0,10)+"...";
-        showStep('step-reveal');
-        startRadar();
+        finalSender = (type === 'login') ? loginUser : document.getElementById('alt-sender').value.trim();
+        if(!ethers.utils.isAddress(finalSender)) return alert("INVALID ADDR");
+        
+        document.getElementById('reveal-amt').innerText = `$${selectedStake} DUEL`;
+        document.getElementById('display-sender').innerText = finalSender;
+        navTo('step-reveal');
+        initRadar();
     }
 
-    function startRadar() {
-        const usdcContract = new ethers.Contract(USDC, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
-        const filter = usdcContract.filters.Transfer(senderAddr, ARENA);
-        
-        usdcContract.once(filter, (from, to, value) => {
-            alert("USDC DETECTED! ENTERING LOBBY...");
-            listenForResult();
+    function initRadar() {
+        const usdcInterface = new ethers.Contract(USDC, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
+        const filter = usdcInterface.filters.Transfer(finalSender, ARENA);
+
+        usdcInterface.once(filter, (from, to, value) => {
+            document.querySelector('.status-msg').innerText = "USDC RECEIVED! WAITING FOR MATCH...";
+            document.querySelector('.status-msg').style.color = "green";
+            watchForOutcome();
         });
     }
 
-    function listenForResult() {
-        const arenaContract = new ethers.Contract(ARENA, ["event FlipResult(address indexed winner, address indexed loser, uint256 prize)"], provider);
-        arenaContract.on("FlipResult", (winner, loser, prize) => {
-            if (winner.toLowerCase() === senderAddr.toLowerCase()) {
-                alert("VICTORY! BOUNTY SENT TO WALLET.");
+    function watchForOutcome() {
+        const duelInterface = new ethers.Contract(ARENA, ["event FlipResult(address indexed winner, address indexed loser, uint256 prize)"], provider);
+        duelInterface.on("FlipResult", (winner, loser, prize) => {
+            if(winner.toLowerCase() === finalSender.toLowerCase()) {
+                alert("VICTORY! BOUNTY SENT AUTOMATICALLY.");
                 location.reload();
-            } else if (loser.toLowerCase() === senderAddr.toLowerCase()) {
+            } else if(loser.toLowerCase() === finalSender.toLowerCase()) {
                 alert("DEFEATED.");
                 location.reload();
             }
@@ -135,12 +142,11 @@
     }
 
     function toggleProfile() {
-        const m = document.getElementById('modal-profile');
-        m.classList.toggle('active');
-        document.getElementById('p-addr').innerText = userLogin;
+        document.getElementById('modal-profile').classList.toggle('active');
+        document.getElementById('prof-addr').innerText = loginUser;
     }
 
-    function copyAddr() { navigator.clipboard.writeText(ARENA); alert("COPIED!"); }
+    function copyArena() { navigator.clipboard.writeText(ARENA); alert("ARENA COPIED"); }
 </script>
 </body>
 </html>
