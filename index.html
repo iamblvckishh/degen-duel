@@ -19,7 +19,7 @@
         
         .btn { 
             background: var(--yellow); border: 4px solid var(--black); padding: 15px; 
-            cursor: pointer; width: 100%; font-size: 1.2rem; box-shadow: 4px 4px 0px 0px var(--black); 
+            cursor: pointer; width: 100%; font-size: 1.2rem; box-shadow: 4px 4px 0px 0px #000; 
             margin-bottom: 10px; transition: 0.1s; text-transform: uppercase;
         }
         .btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px 0px; }
@@ -73,16 +73,34 @@
 
     let signer, duelContract, usdcContract, currentStakeRaw;
 
+    // AUTO-LOGIN ON LOAD
+    window.addEventListener('load', async () => {
+        if (window.ethereum) {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const accounts = await provider.listAccounts();
+            if (accounts.length > 0) {
+                updateLog(">> PREVIOUS SESSION FOUND. LOGGING IN...");
+                connect();
+            }
+        }
+    });
+
     async function connect() {
         if (!window.ethereum) return alert("Install MetaMask");
         try {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
+            
+            // Your exact working method
             const accounts = await provider.send("eth_requestAccounts", []);
             const addr = accounts[0];
             
             const { chainId } = await provider.getNetwork();
             if (chainId !== 11155111) {
-                alert("Switch to Sepolia Network");
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0xaa36a7' }], 
+                });
+                location.reload();
                 return;
             }
 
@@ -98,6 +116,7 @@
                 "function allowance(address o, address s) view returns (uint256)"
             ], signer);
 
+            // UI Fixes
             document.getElementById('connect-btn').innerText = addr.substring(0,8) + "...";
             document.getElementById('connect-btn').style.background = "#00FF19";
             document.getElementById('game-ui').style.opacity = "1";
@@ -114,7 +133,7 @@
                 document.getElementById('lobby-view').style.display = 'none';
             });
 
-        } catch (e) { updateLog("!! BOOT ERROR"); }
+        } catch (e) { updateLog("!! CONNECTION FAILED"); }
     }
 
     async function play(amount) {
@@ -125,29 +144,25 @@
             updateLog(`>> INITIATING $${amount} STAKE...`);
             const userAddr = await signer.getAddress();
             
-            // CHECK ALLOWANCE - Move forward if already approved
             const allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
             
             if (allowance.lt(currentStakeRaw)) {
                 updateLog(">> APPROVING USDC...");
                 const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
-                updateLog(">> WAITING FOR APPROVAL CONFIRMATION...");
                 await txA.wait();
                 updateLog(">> APPROVAL SUCCESSFUL.");
             } else {
-                updateLog(">> USDC ALREADY APPROVED. SKIPPING...");
+                updateLog(">> USDC ALREADY APPROVED.");
             }
 
-            // JOIN LOBBY
             updateLog(">> SIGNING TO JOIN LOBBY...");
             const txS = await duelContract.enterFiftyFifty(currentStakeRaw);
-            updateLog(">> WAITING FOR BLOCKCHAIN...");
             await txS.wait();
             
             document.getElementById('lobby-view').style.display = 'block';
             updateLog(`>> STAKED $${amount}. WAITING FOR OPPONENT.`);
         } catch (e) {
-            updateLog("!! TRANSACTION FAILED: " + (e.reason || "REJECTED"));
+            updateLog("!! ERROR: " + (e.reason || "FAILED"));
         }
     }
 
