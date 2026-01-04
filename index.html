@@ -7,82 +7,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
-            --bg: #f0f0f0;
-            --black: #000000;
-            --purple: #BC00FF;
-            --lime: #00FF19;
-            --yellow: #FFFF00;
-            --white: #ffffff;
+            --bg: #f0f0f0; --black: #000000; --purple: #BC00FF;
+            --lime: #00FF19; --yellow: #FFFF00; --white: #ffffff;
             --shadow: 6px 6px 0px 0px #000000;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; }
         body { background-color: var(--bg); padding: 20px; color: var(--black); }
-
         .container { max-width: 500px; margin: 0 auto; }
-        
-        /* Brutalist Card Style */
-        .card { 
-            background: var(--white); 
-            border: 4px solid var(--black); 
-            padding: 20px; 
-            box-shadow: var(--shadow); 
-            margin-bottom: 20px; 
-        }
-
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        
+        .card { background: var(--white); border: 4px solid var(--black); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
         .btn { 
-            background: var(--yellow); 
-            border: 3px solid var(--black); 
-            padding: 12px; 
-            cursor: pointer; 
-            width: 100%; 
-            font-size: 1rem; 
-            box-shadow: 4px 4px 0px 0px #000; 
-            transition: 0.1s;
+            background: var(--yellow); border: 3px solid var(--black); padding: 12px; 
+            cursor: pointer; width: 100%; font-size: 1rem; box-shadow: 4px 4px 0px 0px #000; 
+            transition: 0.1s; display: block;
         }
         .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px 0px #000; }
-        .btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
-
         .tier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        
-        .status-box { 
-            background: var(--black); 
-            color: var(--lime); 
-            padding: 15px; 
-            font-family: monospace; 
-            font-size: 0.85rem; 
-            height: 120px; 
-            overflow-y: auto; 
-            border: 3px solid var(--black); 
-        }
-
-        .lobby-ui { 
-            background: var(--purple); 
-            color: white; 
-            display: none; 
-            margin-top: 15px;
-            padding: 15px;
-            border: 3px solid var(--black);
-        }
-
-        .history-item {
-            border-bottom: 2px solid #000;
-            padding: 5px 0;
-            font-size: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-        }
+        .status-box { background: var(--black); color: var(--lime); padding: 15px; font-family: monospace; font-size: 0.85rem; height: 120px; overflow-y: auto; border: 3px solid var(--black); }
+        .lobby-ui { background: var(--purple); color: white; display: none; margin-top: 15px; padding: 15px; border: 3px solid var(--black); }
+        /* Pulse for connect button */
+        #connect-btn { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { background: var(--yellow); } 50% { background: #ffd700; } 100% { background: var(--yellow); } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <div class="header">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h1>DEGEN FLIP</h1>
-            <div id="network-tag" style="font-size: 0.7rem; background: var(--lime); padding: 4px; border: 2px solid #000;">SEPOLIA</div>
+            <div style="font-size: 0.7rem; background: var(--lime); padding: 4px; border: 2px solid #000;">SEPOLIA</div>
         </div>
         <button class="btn" id="connect-btn" onclick="connect()">CONNECT WALLET</button>
     </div>
@@ -95,7 +48,6 @@
             <button class="btn" onclick="play(100)">$100</button>
             <button class="btn" onclick="play(1000)">$1K</button>
         </div>
-
         <div id="lobby-view" class="lobby-ui">
             <p id="lobby-text">WAITING FOR MATCH...</p>
             <button class="btn" style="background: var(--white); color: black; margin-top:10px;" onclick="cancel()">QUIT & REFUND</button>
@@ -104,63 +56,57 @@
 
     <div class="card">
         <h3>ACTIVITY LOG</h3>
-        <div id="status-log" class="status-box">>> DISCONNECTED</div>
-    </div>
-
-    <div class="card">
-        <h3>LAST FLIPS</h3>
-        <div id="history-list">
-            <div class="history-item"><span>Waiting for events...</span></div>
-        </div>
+        <div id="status-log" class="status-box">>> SYSTEM READY. CONNECT WALLET.</div>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
     const CONTRACT_ADDRESS = "0xe3e5Cf7764536a3E2c935078433DD5A7D8e72b43".toLowerCase(); 
     const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238".toLowerCase();
 
     let signer, duelContract, usdcContract, currentStake;
 
-    const ABI = [
-        "function enterFiftyFifty(uint256 _amount) external",
-        "function cancelFlip(uint256 _amount) external",
-        "function lobby(uint256) view returns (address)",
-        "event JoinedLobby(address indexed player, uint256 amount)",
-        "event FlipResult(address indexed winner, address indexed loser, uint256 prize)",
-        "event Cancelled(address indexed player, uint256 amount)"
-    ];
-
-    const USDC_ABI = [
-        "function approve(address s, uint256 a) returns (bool)",
-        "function allowance(address o, address s) view returns (uint256)"
-    ];
-
     async function connect() {
         if (!window.ethereum) return alert("Install MetaMask");
-        
         try {
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             await provider.send("eth_requestAccounts", []);
             
             const { chainId } = await provider.getNetwork();
             if (chainId !== 11155111) {
-                updateLog("!! WRONG NETWORK. SWITCH TO SEPOLIA.");
+                alert("Please switch MetaMask to Sepolia Network!");
                 return;
             }
 
             signer = provider.getSigner();
             const addr = await signer.getAddress();
-            document.getElementById('connect-btn').innerText = addr.substring(0,6) + "..." + addr.slice(-4);
-            document.getElementById('game-ui').style.opacity = "1";
-            document.getElementById('game-ui').style.pointer_events = "auto";
             
-            duelContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-            usdcContract = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
+            // UI Updates
+            const connBtn = document.getElementById('connect-btn');
+            connBtn.innerText = addr.substring(0,6) + "..." + addr.slice(-4);
+            connBtn.style.animation = "none";
+            connBtn.style.background = "var(--lime)";
             
-            setupEventListeners();
-            updateLog(">> CONNECTED. READY TO DEGEN.");
+            // UNLOCK GAME UI
+            const gameUI = document.getElementById('game-ui');
+            gameUI.style.opacity = "1";
+            gameUI.style.pointerEvents = "auto";
+            
+            duelContract = new ethers.Contract(CONTRACT_ADDRESS, [
+                "function enterFiftyFifty(uint256 _amount) external",
+                "function cancelFlip(uint256 _amount) external",
+                "event FlipResult(address indexed winner, address indexed loser, uint256 prize)"
+            ], signer);
+
+            usdcContract = new ethers.Contract(USDC_ADDRESS, [
+                "function approve(address s, uint256 a) returns (bool)",
+                "function allowance(address o, address s) view returns (uint256)"
+            ], signer);
+            
+            updateLog(">> WALLET CONNECTED: " + addr);
+            listenForWins();
         } catch (err) {
+            console.error(err);
             updateLog("!! CONNECTION FAILED");
         }
     }
@@ -168,65 +114,44 @@
     async function play(amount) {
         if (!signer) return;
         currentStake = ethers.utils.parseUnits(amount.toString(), 6);
-        
         try {
-            updateLog(`>> PREPARING $${amount} STAKE...`);
-            
-            // 1. Check Allowance
+            updateLog(`>> STAKING $${amount}...`);
             const userAddr = await signer.getAddress();
             const allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
             
             if (allowance.lt(currentStake)) {
-                updateLog(">> APPROVING USDC...");
+                updateLog(">> REQUESTING USDC APPROVAL...");
                 const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
                 await txA.wait();
+                updateLog(">> APPROVED.");
             }
 
-            // 2. Enter Lobby
-            updateLog(">> SENDING TO CONTRACT...");
             const txS = await duelContract.enterFiftyFifty(currentStake);
-            updateLog(">> TX PENDING...");
+            updateLog(">> WAITING FOR BLOCKCHAIN...");
             await txS.wait();
             
             document.getElementById('lobby-view').style.display = 'block';
-            document.getElementById('lobby-text').innerText = `IN $${amount} LOBBY...`;
-            updateLog(`>> ENTERED $${amount} LOBBY.`);
+            document.getElementById('lobby-text').innerText = `MATCHMAKING $${amount}...`;
+            updateLog(`>> IN $${amount} LOBBY. DON'T REFRESH.`);
         } catch (e) {
-            updateLog("!! ERROR: " + (e.reason || "FAILED"));
+            updateLog("!! ERROR: " + (e.reason || "REJECTED"));
         }
     }
 
     async function cancel() {
-        if (!currentStake) return;
         try {
-            updateLog(">> REQUESTING REFUND...");
+            updateLog(">> EXITING LOBBY...");
             const tx = await duelContract.cancelFlip(currentStake);
             await tx.wait();
             document.getElementById('lobby-view').style.display = 'none';
-            updateLog(">> REFUNDED. LOBBY CLEARED.");
-        } catch (e) {
-            updateLog("!! CANCEL FAILED");
-        }
+            updateLog(">> REFUND SUCCESSFUL.");
+        } catch (e) { updateLog("!! CANCEL FAILED"); }
     }
 
-    function setupEventListeners() {
-        duelContract.on("FlipResult", (winner, loser, prize) => {
-            const prizeUSD = ethers.utils.formatUnits(prize, 6);
-            updateLog(`>> MATCH FINISHED! WINNER: ${winner.substring(0,6)}`);
-            
-            // Add to UI history
-            const list = document.getElementById('history-list');
-            const item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `<span>WINNER: ${winner.substring(0,6)}</span> <span>+$${prizeUSD}</span>`;
-            list.prepend(item);
-
-            // Hide lobby if the user was in it
+    function listenForWins() {
+        duelContract.on("FlipResult", (winner) => {
+            updateLog(">> MATCH COMPLETED!");
             document.getElementById('lobby-view').style.display = 'none';
-        });
-
-        duelContract.on("JoinedLobby", (player, amount) => {
-            updateLog(`>> NEW PLAYER JOINED $${ethers.utils.formatUnits(amount,6)} LOBBY`);
         });
     }
 
