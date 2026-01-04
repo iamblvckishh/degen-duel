@@ -7,172 +7,140 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
-            --bg: #0a0a0a; --stone: #1a1a1a; --iron: #333;
-            --lime: #00FF19; --blood: #FF4500; --gold: #FFFF00;
+            --bg: #ffffff; --black: #000000; --lime: #00FF19; --yellow: #FFFF00;
+            --shadow: 8px 8px 0px 0px var(--black);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; }
-        body { 
-            background: var(--bg); color: white; height: 100vh; 
-            display: flex; align-items: center; justify-content: center;
-            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 30px 30px;
-        }
-        .arena-wrapper { width: 100%; max-width: 480px; padding: 20px; }
-        .panel { 
-            background: var(--stone); border: 3px solid var(--iron); padding: 30px; 
-            box-shadow: 15px 15px 0px #000; display: none; animation: slideIn 0.3s ease-out;
-        }
-        .panel.active { display: block; }
-        @keyframes slideIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        h1 { font-size: 2rem; color: var(--gold); text-align: center; margin-bottom: 20px; }
-        .stake-row { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 15px; border: 1px solid var(--iron); margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
-        .stake-row:hover { border-color: var(--lime); transform: translateX(5px); }
-        .waiting-tag { font-size: 0.7rem; color: var(--lime); }
-
-        input { width: 100%; background: #000; border: 2px solid var(--iron); padding: 15px; color: var(--lime); margin-bottom: 15px; outline: none; }
-        .btn { width: 100%; padding: 18px; border: none; cursor: pointer; font-weight: bold; margin-bottom: 10px; box-shadow: 5px 5px 0px #000; }
-        .btn-gold { background: var(--gold); color: #000; }
-        .btn-outline { background: transparent; border: 2px solid var(--iron); color: white; }
-        .btn-retreat { background: transparent; color: #666; font-size: 0.7rem; border: none; margin-top: 10px; width: 100%; }
-
-        /* Profile Modal */
-        #profile-btn { position: fixed; top: 20px; right: 20px; background: var(--gold); color: #000; padding: 10px; font-size: 0.7rem; cursor: pointer; border: 2px solid #000; display: none; }
-        .luck-meter { height: 10px; background: #000; border: 1px solid var(--iron); margin: 10px 0; }
-        #luck-bar { height: 100%; background: var(--lime); width: 0%; transition: 1s; }
-        .radar { animation: pulse 1.5s infinite; color: var(--lime); font-size: 0.7rem; text-align: center; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; }
+        body { background: var(--bg); display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .container { width: 100%; max-width: 440px; padding: 20px; position: relative; }
+        .card { background: #fff; border: 4px solid var(--black); padding: 30px; box-shadow: var(--shadow); display: none; }
+        .card.active { display: block; }
+        h1 { font-size: 2.2rem; letter-spacing: -2px; margin-bottom: 20px; line-height: 0.9; }
+        .stake-option { display: flex; justify-content: space-between; align-items: center; border: 4px solid var(--black); padding: 15px; margin-bottom: 12px; cursor: pointer; transition: 0.1s; background: #fff; }
+        .stake-option:hover { background: var(--lime); transform: translate(-2px, -2px); box-shadow: 4px 4px 0px 0px var(--black); }
+        .waiting-count { font-size: 0.7rem; background: var(--black); color: #fff; padding: 2px 6px; }
+        input { width: 100%; padding: 15px; border: 4px solid var(--black); margin-bottom: 15px; font-size: 1rem; outline: none; }
+        .btn { width: 100%; padding: 15px; border: 4px solid var(--black); background: var(--yellow); font-weight: bold; cursor: pointer; box-shadow: 4px 4px 0px 0px var(--black); margin-bottom: 10px; }
+        .btn:active { transform: translate(2px, 2px); box-shadow: none; }
+        .back-link { font-size: 0.7rem; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-top: 10px; }
+        #profile-trigger { position: fixed; top: 20px; right: 20px; border: 3px solid var(--black); padding: 8px 12px; background: var(--lime); cursor: pointer; font-size: 0.7rem; box-shadow: 4px 4px 0px 0px var(--black); display: none; }
+        .radar-box { background: #000; color: var(--lime); padding: 15px; font-size: 0.6rem; word-break: break-all; margin-bottom: 10px; cursor: pointer; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .blinking { animation: blink 1s infinite; }
     </style>
 </head>
 <body>
 
-    <div id="profile-btn" onclick="toggleProfile()">[ PROFILE ]</div>
+<div id="profile-trigger" onclick="toggleProfile()">PROFILE</div>
 
-    <div class="arena-wrapper">
-        <div class="panel active" id="p-home">
-            <h1>CHOOSE STAKE</h1>
-            <div class="stake-row" onclick="pickStake(1)">
-                <span>$1 USDC</span> <span class="waiting-tag">3 WARRIORS WAITING</span>
-            </div>
-            <div class="stake-row" onclick="pickStake(10)">
-                <span>$10 USDC</span> <span class="waiting-tag">1 WARRIOR WAITING</span>
-            </div>
-            <div class="stake-row" onclick="pickStake(100)">
-                <span>$100 USDC</span> <span class="waiting-tag">0 WAITING</span>
-            </div>
-            <div class="stake-row" onclick="pickStake(1000)">
-                <span>$1K USDC</span> <span class="waiting-tag">READY TO DUEL</span>
-            </div>
-        </div>
-
-        <div class="panel" id="p-login">
-            <h1>ARENA LOGIN</h1>
-            <p style="font-size: 0.7rem; color: #888; margin-bottom: 15px; text-align: center;">PASTE ADDRESS OR ENS TO ENTER</p>
-            <input type="text" id="login-input" placeholder="0x... OR .eth">
-            <button class="btn btn-gold" onclick="doLogin()">ENTER ARENA</button>
-            <button class="btn btn-retreat" onclick="navTo('p-home')">← BACK TO STAKES</button>
-        </div>
-
-        <div class="panel" id="p-wallet-select">
-            <h1>SENDING FROM?</h1>
-            <button class="btn btn-gold" id="btn-use-login" onclick="setSender('login')">USE LOGGED IN WALLET</button>
-            <p style="text-align: center; font-size: 0.7rem; margin: 10px 0;">-- OR PASTE DIFFERENT SENDER --</p>
-            <input type="text" id="alt-sender" placeholder="PASTE SENDER ADDRESS">
-            <button class="btn btn-outline" onclick="setSender('alt')">USE THIS ADDRESS</button>
-            <button class="btn btn-retreat" onclick="navTo('p-login')">← BACK</button>
-        </div>
-
-        <div class="panel" id="p-reveal">
-            <h1 id="reveal-amt">$0 USDC DUEL</h1>
-            <p style="font-size: 0.7rem; text-align: center;">SEND EXACT AMOUNT FROM:<br><b id="sender-display" style="color:var(--gold)"></b></p>
-            <p style="font-size: 0.7rem; text-align: center; margin-top: 15px;">TO ARENA CONTRACT:</p>
-            <div style="background:#000; padding:15px; color:var(--lime); font-size:0.6rem; border:1px dashed var(--lime); margin:10px 0; word-break:break-all; cursor:pointer;" onclick="copyAddr()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
-            <div class="radar">RADAR SCANNING FOR YOUR TRANSFER...</div>
-            <button class="btn btn-retreat" onclick="navTo('p-wallet-select')">← CHANGE WALLET</button>
-        </div>
-
-        <div class="panel" id="p-profile" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;">
-            <h1>COMBAT RECORD</h1>
-            <p id="prof-addr" style="font-size: 0.6rem; text-align: center; color: var(--gold);"></p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0;">
-                <div style="border:1px solid var(--iron); padding:10px; text-align:center;">WINS<br><span id="prof-wins" style="color:var(--lime)">0</span></div>
-                <div style="border:1px solid var(--iron); padding:10px; text-align:center;">LOSS<br><span id="prof-loss" style="color:var(--blood)">0</span></div>
-            </div>
-            <p style="font-size:0.7rem;">LUCK METER</p>
-            <div class="luck-meter"><div id="luck-bar"></div></div>
-            <button class="btn btn-gold" style="margin-top:20px;" onclick="toggleProfile()">RETURN TO ARENA</button>
-        </div>
+<div class="container">
+    <div class="card active" id="step-stake">
+        <h1>STAKE AMOUNT</h1>
+        <div class="stake-option" onclick="selectStake(1)"><span>$1 USDC</span> <span class="waiting-count">ACTIVE</span></div>
+        <div class="stake-option" onclick="selectStake(10)"><span>$10 USDC</span> <span class="waiting-count">ACTIVE</span></div>
+        <div class="stake-option" onclick="selectStake(100)"><span>$100 USDC</span> <span class="waiting-count">QUIET</span></div>
+        <div class="stake-option" onclick="selectStake(1000)"><span>$1K USDC</span> <span class="waiting-count">ELITE</span></div>
     </div>
 
-<script>
-    const MAINNET_RPC = "https://rpc.ankr.com/eth";
-    const SEPOLIA_RPC = "https://rpc.ankr.com/eth_sepolia";
-    const CONTRACT = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28";
-    
-    let selectedStake = 0;
-    let loginAddress = "";
-    let senderAddress = "";
+    <div class="card" id="step-login">
+        <h1>IDENTIFY</h1>
+        <input type="text" id="wallet-input" placeholder="0x... OR .ETH">
+        <button class="btn" onclick="doLogin()">ENTER ARENA</button>
+        <span class="back-link" onclick="showStep('step-stake')">BACK</span>
+    </div>
 
-    function navTo(id) {
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    <div class="card" id="step-wallet">
+        <h1>SENDER?</h1>
+        <button class="btn" id="login-wallet-btn" onclick="setSender('login')">USE LOGIN WALLET</button>
+        <p style="text-align:center; font-size:0.8rem; margin:10px 0;">-- OR --</p>
+        <input type="text" id="alt-wallet" placeholder="OTHER ADDRESS">
+        <button class="btn" style="background:#fff" onclick="setSender('alt')">USE THIS</button>
+    </div>
+
+    <div class="card" id="step-reveal">
+        <h1 id="final-stake">DUEL</h1>
+        <p style="font-size:0.7rem; margin-bottom:5px;">SENDER: <span id="display-sender" style="color:blue"></span></p>
+        <p style="font-size:0.7rem; margin-bottom:10px;">TARGET ARENA:</p>
+        <div class="radar-box" onclick="copyAddr()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
+        <p class="blinking" style="text-align:center; font-size:0.7rem;">ARENA RADAR ACTIVE...</p>
+    </div>
+
+    <div class="card" id="modal-profile" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:100;">
+        <h1>STATS</h1>
+        <p id="p-addr" style="font-size:0.6rem; margin-bottom:15px;"></p>
+        <div style="border:4px solid #000; padding:10px; margin-bottom:10px;">WINS: <span id="p-wins">0</span></div>
+        <div style="border:4px solid #000; padding:10px; margin-bottom:10px;">LOSS: <span id="p-loss">0</span></div>
+        <button class="btn" onclick="toggleProfile()">CLOSE</button>
+    </div>
+</div>
+
+<script>
+    const ARENA = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28";
+    const USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+    const RPC = "https://rpc.ankr.com/eth_sepolia";
+    const provider = new ethers.providers.JsonRpcProvider(RPC);
+
+    let currentStake = 0;
+    let userLogin = "";
+    let senderAddr = "";
+
+    function showStep(id) {
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
-    function pickStake(amt) {
-        selectedStake = amt;
-        navTo('p-login');
-    }
+    function selectStake(amt) { currentStake = amt; showStep('step-login'); }
 
     async function doLogin() {
-        const input = document.getElementById('login-input').value.trim();
+        const input = document.getElementById('wallet-input').value.trim();
         if(!input) return;
-        
         try {
-            const provider = new ethers.providers.JsonRpcProvider(MAINNET_RPC);
-            if (input.includes('.')) {
-                loginAddress = await provider.resolveName(input);
-            } else {
-                loginAddress = input;
-            }
-            
-            if (!ethers.utils.isAddress(loginAddress)) throw new Error("Invalid");
-            
-            document.getElementById('btn-use-login').innerText = `USE ${loginAddress.substring(0,6)}...`;
-            document.getElementById('profile-btn').style.display = 'block';
-            navTo('p-wallet-select');
-        } catch(e) { alert("Identity not found in the records."); }
+            // Simple check: if ends in .eth, would need mainnet provider to resolve
+            userLogin = input; // For Sepolia dev, assuming address is pasted
+            document.getElementById('login-wallet-btn').innerText = `USE ${userLogin.substring(0,6)}...`;
+            document.getElementById('profile-trigger').style.display = 'block';
+            showStep('step-wallet');
+        } catch(e) { alert("ERROR"); }
     }
 
     function setSender(type) {
-        if (type === 'login') {
-            senderAddress = loginAddress;
-        } else {
-            senderAddress = document.getElementById('alt-sender').value.trim();
-            if(!ethers.utils.isAddress(senderAddress)) return alert("Invalid Address");
-        }
+        senderAddr = (type === 'login') ? userLogin : document.getElementById('alt-wallet').value.trim();
+        document.getElementById('final-stake').innerText = `$${currentStake} DUEL`;
+        document.getElementById('display-sender').innerText = senderAddr.substring(0,10)+"...";
+        showStep('step-reveal');
+        startRadar();
+    }
+
+    function startRadar() {
+        const usdcContract = new ethers.Contract(USDC, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
+        const filter = usdcContract.filters.Transfer(senderAddr, ARENA);
         
-        document.getElementById('reveal-amt').innerText = `$${selectedStake} DUEL`;
-        document.getElementById('sender-display').innerText = senderAddress;
-        navTo('p-reveal');
-        // startRadar(senderAddress, selectedStake); // Your actual ethers code
+        usdcContract.once(filter, (from, to, value) => {
+            alert("USDC DETECTED! ENTERING LOBBY...");
+            listenForResult();
+        });
+    }
+
+    function listenForResult() {
+        const arenaContract = new ethers.Contract(ARENA, ["event FlipResult(address indexed winner, address indexed loser, uint256 prize)"], provider);
+        arenaContract.on("FlipResult", (winner, loser, prize) => {
+            if (winner.toLowerCase() === senderAddr.toLowerCase()) {
+                alert("VICTORY! BOUNTY SENT TO WALLET.");
+                location.reload();
+            } else if (loser.toLowerCase() === senderAddr.toLowerCase()) {
+                alert("DEFEATED.");
+                location.reload();
+            }
+        });
     }
 
     function toggleProfile() {
-        const prof = document.getElementById('p-profile');
-        if(prof.classList.contains('active')) {
-            prof.classList.remove('active');
-        } else {
-            document.getElementById('prof-addr').innerText = loginAddress;
-            document.getElementById('prof-wins').innerText = Math.floor(Math.random()*10);
-            document.getElementById('prof-loss').innerText = Math.floor(Math.random()*10);
-            document.getElementById('luck-bar').style.width = "65%";
-            prof.classList.add('active');
-        }
+        const m = document.getElementById('modal-profile');
+        m.classList.toggle('active');
+        document.getElementById('p-addr').innerText = userLogin;
     }
 
-    function copyAddr() {
-        navigator.clipboard.writeText(CONTRACT);
-        alert("COPIED!");
-    }
+    function copyAddr() { navigator.clipboard.writeText(ARENA); alert("COPIED!"); }
 </script>
 </body>
 </html>
