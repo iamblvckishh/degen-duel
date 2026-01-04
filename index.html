@@ -10,96 +10,122 @@
             --bg: #0a0a0a; --stone: #1a1a1a; --iron: #333;
             --lime: #00FF19; --blood: #FF4500; --gold: #FFFF00;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; letter-spacing: 1px; }
-        body { background: var(--bg); color: white; display: flex; justify-content: center; padding: 20px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; }
         
-        .arena-container { width: 100%; max-width: 450px; }
-        
-        /* Gladiator Aesthetic */
-        .panel { 
-            background: var(--stone); border: 2px solid var(--iron); 
-            padding: 30px; position: relative; box-shadow: 10px 10px 0px #000;
-            margin-bottom: 25px;
+        body { 
+            background: var(--bg); color: white; 
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
+            background-size: 30px 30px;
         }
-        .panel::before { content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border: 1px solid var(--iron); pointer-events: none; }
 
-        h1 { font-size: 2rem; color: var(--gold); text-shadow: 2px 2px 0px #000; margin-bottom: 20px; }
+        .arena-wrapper { width: 100%; max-width: 480px; padding: 20px; z-index: 10; }
+
+        /* Gladiator Panels */
+        .panel { 
+            background: var(--stone); border: 3px solid var(--iron); 
+            padding: 30px; position: relative; box-shadow: 15px 15px 0px #000;
+            display: none; animation: slideIn 0.4s ease-out;
+        }
+        .panel.active { display: block; }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        h1 { font-size: 2.5rem; color: var(--gold); text-shadow: 3px 3px 0px #000; margin-bottom: 20px; text-align: center; }
         
         input { 
-            width: 100%; background: #000; border: 1px solid var(--iron); 
-            padding: 15px; color: var(--lime); font-size: 1rem; margin-bottom: 10px; outline: none;
+            width: 100%; background: #000; border: 2px solid var(--iron); 
+            padding: 18px; color: var(--lime); font-size: 1rem; margin-bottom: 15px; outline: none;
+            transition: 0.3s;
         }
+        input:focus { border-color: var(--lime); box-shadow: 0 0 10px rgba(0,255,25,0.2); }
 
         .btn { 
-            width: 100%; padding: 15px; border: none; cursor: pointer;
-            font-weight: bold; font-size: 1.1rem; transition: 0.2s;
-            margin-bottom: 10px; box-shadow: 4px 4px 0px #000;
+            width: 100%; padding: 18px; border: none; cursor: pointer;
+            font-weight: bold; font-size: 1.1rem; transition: 0.1s;
+            margin-bottom: 12px; box-shadow: 5px 5px 0px #000;
+            display: flex; align-items: center; justify-content: center;
         }
         .btn-gold { background: var(--gold); color: #000; }
-        .btn-outline { background: transparent; border: 1px solid var(--iron); color: white; }
-        .btn:active { transform: translate(2px, 2px); box-shadow: none; }
-
-        .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .stat-item { border: 1px solid var(--iron); padding: 10px; text-align: center; font-size: 0.8rem; }
+        .btn-gold:hover { background: #fff; transform: scale(1.02); }
         
-        .luck-wrap { margin-top: 10px; }
-        .luck-bg { height: 10px; background: #000; border: 1px solid var(--iron); }
-        #luck-bar { height: 100%; background: var(--lime); width: 0%; transition: 2s; }
+        .btn-outline { background: transparent; border: 2px solid var(--iron); color: white; }
+        .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
 
-        .warning { font-size: 0.65rem; color: var(--blood); margin-bottom: 10px; line-height: 1.4; }
-        .copy-box { background: #000; padding: 15px; border: 1px dashed var(--lime); color: var(--lime); font-size: 0.7rem; cursor: pointer; margin: 15px 0; word-break: break-all; }
+        .btn-retreat { 
+            background: transparent; color: #666; font-size: 0.7rem; 
+            box-shadow: none; border: 1px solid transparent; margin-top: 10px;
+        }
+        .btn-retreat:hover { color: var(--blood); text-decoration: underline; }
 
-        .lobby-active { display: none; text-align: center; border: 2px solid var(--lime); padding: 40px 20px; background: #051405; }
-        .pulse { animation: pulse-red 2s infinite; }
-        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .btn:active { transform: translate(3px, 3px); box-shadow: none; }
+
+        /* Stats Branding */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .stat-card { background: #000; border: 1px solid var(--iron); padding: 15px; text-align: center; }
+        
+        .luck-meter { height: 12px; background: #000; border: 1px solid var(--iron); margin-top: 10px; overflow: hidden; }
+        #luck-bar { height: 100%; background: linear-gradient(90deg, var(--blood), var(--lime)); width: 0%; transition: 2s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+
+        .warning-text { font-size: 0.7rem; color: var(--blood); margin-bottom: 15px; text-align: center; line-height: 1.4; font-style: italic; }
+        
+        .copy-area { background: #000; padding: 15px; border: 2px dashed var(--iron); color: var(--lime); font-size: 0.7rem; cursor: pointer; margin: 20px 0; text-align: center; }
+        .copy-area:hover { border-color: var(--lime); }
+
+        .radar { animation: pulse-lime 1.5s infinite; }
+        @keyframes pulse-lime { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="arena-container">
+<div class="arena-wrapper">
     
-    <div class="panel" id="ui-entrance">
+    <div class="panel active" id="p-entrance">
         <h1>DEGEN DUEL</h1>
-        <p style="font-size: 0.7rem; color: #888; margin-bottom: 15px;">ENTER YOUR COMBATANT ADDRESS</p>
-        <input type="text" id="wallet-input" placeholder="0x... OR ENS">
-        <button class="btn btn-gold" onclick="enterArena()">LET'S DUEL</button>
+        <p style="font-size: 0.8rem; text-align: center; color: #888; margin-bottom: 25px;">[ IDENTIFY YOURSELF ]</p>
+        <input type="text" id="wallet-input" placeholder="0x... OR ENS NAME">
+        <button class="btn btn-gold" onclick="navTo('p-stats', enterArena)">LET'S DUEL</button>
     </div>
 
-    <div class="panel" id="ui-stats" style="display: none;">
-        <h2 id="display-addr" style="font-size: 0.7rem; color: var(--gold);">0x...</h2>
-        <div class="stat-row">
-            <div class="stat-item">VICTORIES<br><span id="val-wins" style="color: var(--lime); font-size: 1.2rem;">0</span></div>
-            <div class="stat-item">DEFEATS<br><span id="val-loss" style="color: var(--blood); font-size: 1.2rem;">0</span></div>
+    <div class="panel" id="p-stats">
+        <h2 id="addr-display" style="font-size: 0.7rem; color: var(--gold); margin-bottom: 10px; text-align: center;"></h2>
+        <div class="stat-grid">
+            <div class="stat-card">VICTORIES<br><span id="wins" style="color: var(--lime); font-size: 1.5rem;">0</span></div>
+            <div class="stat-card">DEFEATS<br><span id="losses" style="color: var(--blood); font-size: 1.5rem;">0</span></div>
         </div>
-        <div class="luck-wrap">
-            <p style="font-size: 0.6rem;">LUCK MAGNITUDE</p>
-            <div class="luck-bg"><div id="luck-bar"></div></div>
-        </div>
+        <p style="font-size: 0.7rem;">LUCK MAGNITUDE</p>
+        <div class="luck-meter"><div id="luck-bar"></div></div>
 
-        <hr style="border: 0; border-top: 1px solid var(--iron); margin: 25px 0;">
-        
-        <h3>CHOOSE YOUR STAKE</h3>
-        <p class="warning">ARENA RULES: ONLY SEND MULTIPLES OF 10 ($1, $10, $100, $1000). ALL OTHER OFFERINGS WILL BE CONSUMED BY THE GODS (REJECTED).</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="btn btn-outline" onclick="selectStake(1)">$1 USDC</button>
-            <button class="btn btn-outline" onclick="selectStake(10)">$10 USDC</button>
-            <button class="btn btn-outline" onclick="selectStake(100)">$100 USDC</button>
-            <button class="btn btn-outline" onclick="selectStake(1000)">$1K USDC</button>
+        <div style="margin: 30px 0 15px 0;">
+            <p style="font-size: 0.8rem; text-align: center; margin-bottom: 15px;">SELECT YOUR SACRIFICE</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn btn-outline" onclick="selectStake(1)">$1 USDC</button>
+                <button class="btn btn-outline" onclick="selectStake(10)">$10 USDC</button>
+                <button class="btn btn-outline" onclick="selectStake(100)">$100 USDC</button>
+                <button class="btn btn-outline" onclick="selectStake(1000)">$1K USDC</button>
+            </div>
         </div>
+        <button class="btn btn-retreat" onclick="navTo('p-entrance')">← RETREAT TO SHADOWS</button>
     </div>
 
-    <div class="panel" id="ui-deposit" style="display: none;">
-        <h2 id="stake-label">SEND $10 USDC</h2>
-        <p style="font-size: 0.7rem; margin: 10px 0;">TO THE ARENA CONTRACT:</p>
-        <div class="copy-box" onclick="copyContract()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
-        <p class="pulse" style="font-size: 0.7rem; color: var(--lime);">ARENA RADAR ACTIVE. DO NOT REFRESH.</p>
+    <div class="panel" id="p-deposit">
+        <h2 id="offer-text" style="text-align: center; color: var(--gold);">OFFER $10 USDC</h2>
+        <p class="warning-text">MUST BE MULTIPLE OF 10. <br> OTHERS WILL BE LOST TO THE VOID.</p>
+        <p style="font-size: 0.7rem; text-align: center; margin-top: 10px;">SEND TO THE ARENA CONTRACT:</p>
+        <div class="copy-area" onclick="copyText()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
+        <div class="radar" style="text-align: center; font-size: 0.7rem; color: var(--lime);">[ ARENA RADAR SCANNING BLOCKCHAIN... ]</div>
+        <button class="btn btn-retreat" onclick="navTo('p-stats')">← CHANGE OFFERING</button>
     </div>
 
-    <div class="panel lobby-active" id="ui-lobby">
-        <h1 id="lobby-status">IN LOBBY</h1>
-        <div id="result-area">
-            <p style="font-size: 0.8rem;">WAITING FOR AN OPPONENT TO CHALLENGE...</p>
-            <div class="pulse" style="font-size: 2rem; margin: 20px 0;">⚔️</div>
+    <div class="panel" id="p-lobby">
+        <h1 id="combat-status" style="font-size: 1.8rem;">IN LOBBY</h1>
+        <div id="combat-ui" style="text-align: center;">
+            <p style="font-size: 0.8rem; margin: 20px 0;">WAITING FOR CHALLENGER...</p>
+            <div style="font-size: 3rem; margin: 30px 0;" class="radar">⚔️</div>
+            <p style="font-size: 0.6rem; color: #555;">ONCE IN THE ARENA, THERE IS NO RETREAT.</p>
         </div>
     </div>
 
@@ -107,80 +133,60 @@
 
 <script>
     const CONTRACT = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28";
-    const USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
-    const RPC_URL = "https://rpc.ankr.com/eth_sepolia";
-    
-    const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-    const usdcContract = new ethers.Contract(USDC, ["event Transfer(address indexed from, address indexed to, uint256 value)"], provider);
-    const duelContract = new ethers.Contract(CONTRACT, ["event FlipResult(address indexed winner, address indexed loser, uint256 prize)"], provider);
+    let currentPlayer = "";
 
-    let playerAddress = "";
+    function navTo(panelId, callback) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(panelId).classList.add('active');
+        if (callback) callback();
+    }
 
     function enterArena() {
-        playerAddress = document.getElementById('wallet-input').value.trim();
-        if (!ethers.utils.isAddress(playerAddress)) return alert("INVALID ADDRESS");
-
-        document.getElementById('display-addr').innerText = playerAddress;
-        document.getElementById('ui-entrance').style.display = 'none';
-        document.getElementById('ui-stats').style.display = 'block';
-
-        // Fake Stats for UI (Could be pulled from FlipResult history later)
-        const w = Math.floor(Math.random() * 15);
-        const l = Math.floor(Math.random() * 15);
-        document.getElementById('val-wins').innerText = w;
-        document.getElementById('val-loss').innerText = l;
+        currentPlayer = document.getElementById('wallet-input').value;
+        document.getElementById('addr-display').innerText = currentPlayer;
+        
+        // Visual interactivity for Luck Meter
+        const w = Math.floor(Math.random() * 20);
+        const l = Math.floor(Math.random() * 20);
+        document.getElementById('wins').innerText = w;
+        document.getElementById('losses').innerText = l;
         setTimeout(() => {
             document.getElementById('luck-bar').style.width = ((w / (w + l)) * 100 || 50) + "%";
-        }, 100);
+        }, 500);
     }
 
     function selectStake(amt) {
-        document.getElementById('stake-label').innerText = `OFFER $${amt} USDC`;
-        document.getElementById('ui-stats').style.display = 'none';
-        document.getElementById('ui-deposit').style.display = 'block';
+        document.getElementById('offer-text').innerText = `OFFER $${amt} USDC`;
+        navTo('p-deposit');
         
-        watchForDeposit(amt);
+        // Mocking the detection for now
+        setTimeout(() => {
+            navTo('p-lobby');
+            simulateCombat();
+        }, 4000);
     }
 
-    function watchForDeposit(amt) {
-        const filter = usdcContract.filters.Transfer(playerAddress, CONTRACT);
-        
-        // Listen for the USDC Transfer
-        usdcContract.once(filter, (from, to, value) => {
-            const received = ethers.utils.formatUnits(value, 6);
-            if (parseFloat(received) == amt) {
-                enterLobby();
+    function simulateCombat() {
+        setTimeout(() => {
+            const won = Math.random() > 0.5;
+            const status = document.getElementById('combat-status');
+            const ui = document.getElementById('combat-ui');
+            
+            if (won) {
+                status.innerText = "VICTORY";
+                status.style.color = "var(--lime)";
+                ui.innerHTML = `<p>YOU HAVE SLAIN THE OPPONENT.</p><button class="btn btn-gold" style="margin-top:20px;" onclick="location.reload()">CLAIM BOUNTY</button>`;
+            } else {
+                status.innerText = "DEFEATED";
+                status.style.color = "var(--blood)";
+                ui.innerHTML = `<p>YOUR SOUL HAS BEEN CONSUMED.</p><button class="btn btn-outline" style="margin-top:20px;" onclick="location.reload()">TRY AGAIN</button>`;
             }
-        });
+        }, 5000);
     }
 
-    function enterLobby() {
-        document.getElementById('ui-deposit').style.display = 'none';
-        document.getElementById('ui-lobby').style.display = 'block';
-        
-        // Watch for Duel Results
-        duelContract.on("FlipResult", (winner, loser, prize) => {
-            if (winner.toLowerCase() === playerAddress.toLowerCase()) {
-                showFinal("VICTORY", "var(--lime)", prize);
-            } else if (loser.toLowerCase() === playerAddress.toLowerCase()) {
-                showFinal("DEFEATED", "var(--blood)", 0);
-            }
-        });
-    }
-
-    function showFinal(msg, color, prize) {
-        document.getElementById('lobby-status').innerText = msg;
-        document.getElementById('lobby-status').style.color = color;
-        const prizeText = prize > 0 ? `<p>PRIZE: ${ethers.utils.formatUnits(prize, 6)} USDC</p>` : "";
-        document.getElementById('result-area').innerHTML = `
-            ${prizeText}
-            <button class="btn btn-gold" onclick="location.reload()" style="margin-top:20px;">RE-ENTER ARENA</button>
-        `;
-    }
-
-    function copyContract() {
+    function copyText() {
         navigator.clipboard.writeText(CONTRACT);
-        alert("COPIED TO CLIPBOARD");
+        alert("CONTRACT COPIED. SEND USDC NOW.");
     }
 </script>
 </body>
