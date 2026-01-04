@@ -7,184 +7,111 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root { 
-            --bg: #ffffff; 
-            --text: #000000;
-            --card-bg: #ffffff;
-            --black: #000000; 
-            --lime: #00FF19; 
-            --yellow: #FFFF00; 
-            --red: #FF3131; 
+            --bg: #ffffff; --text: #000000; --card-bg: #ffffff; --black: #000000; 
+            --lime: #00FF19; --yellow: #FFFF00; --red: #FF3131; 
             --shadow: 8px 8px 0px 0px var(--black); 
         }
-
-        /* Dark Mode Variables */
         [data-theme="dark"] {
-            --bg: #0a0a0a;
-            --text: #ffffff;
-            --card-bg: #1a1a1a;
-            --black: #00FF19; /* Green borders in dark mode */
+            --bg: #0a0a0a; --text: #ffffff; --card-bg: #1a1a1a; --black: #00FF19; 
             --shadow: 8px 8px 0px 0px #000000;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; transition: background 0.2s, color 0.1s; }
         body { background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
         
-        /* Theme Toggle Button */
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--card-bg);
-            border: 3px solid var(--black);
-            padding: 10px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            font-weight: bold;
-            box-shadow: 4px 4px 0px var(--black);
-            z-index: 100;
-        }
-
+        .theme-toggle { position: fixed; top: 20px; right: 20px; background: var(--card-bg); border: 3px solid var(--black); padding: 10px; cursor: pointer; font-size: 0.6rem; box-shadow: 4px 4px 0px var(--black); z-index: 100; }
         .container { width: 100%; max-width: 400px; }
-        .card { 
-            background: var(--card-bg); 
-            border: 4px solid var(--black); 
-            padding: 30px; 
-            box-shadow: var(--shadow); 
-            display: none; 
-            position: relative;
-        }
+        .card { background: var(--card-bg); border: 4px solid var(--black); padding: 30px; box-shadow: var(--shadow); display: none; position: relative; }
         .card.active { display: block; }
         
-        h1 { font-size: 2.2rem; letter-spacing: -2px; margin-bottom: 10px; line-height: 1; color: var(--text); }
-        .subtitle { font-size: 0.6rem; margin-bottom: 20px; background: var(--black); color: var(--bg); display: inline-block; padding: 2px 5px; }
+        h1 { font-size: 2.2rem; letter-spacing: -2px; margin-bottom: 5px; line-height: 1; }
+        .subtitle { font-size: 0.55rem; margin-bottom: 20px; background: var(--black); color: var(--bg); display: inline-block; padding: 2px 5px; }
         
-        .stake-option { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border: 4px solid var(--black); 
-            padding: 15px; 
-            margin-bottom: 12px; 
-            cursor: pointer; 
-            background: var(--card-bg); 
-        }
-        .stake-option:hover { 
-            background: var(--lime); 
-            color: #000;
-            transform: translate(-3px, -3px); 
-            box-shadow: 5px 5px 0px var(--black); 
-        }
+        /* Wallet Tracker */
+        .tracker-box { margin-bottom: 20px; border: 4px dashed var(--black); padding: 15px; background: rgba(0,255,25,0.05); }
+        .tracker-box input { width: 100%; padding: 12px; border: 3px solid var(--black); background: var(--bg); color: var(--text); font-family: monospace; font-size: 0.7rem; outline: none; margin-top: 8px; }
 
-        .radar-box { 
-            background: #000; 
-            color: var(--lime); 
-            padding: 20px; 
-            font-size: 0.65rem; 
-            word-break: break-all; 
-            margin: 20px 0; 
-            border: 2px dashed var(--lime); 
-            text-align: center; 
-            cursor: copy; 
-        }
+        .stake-option { display: flex; justify-content: space-between; align-items: center; border: 4px solid var(--black); padding: 15px; margin-bottom: 12px; cursor: pointer; background: var(--card-bg); }
+        .stake-option:hover { background: var(--lime); color: #000; transform: translate(-3px, -3px); box-shadow: 5px 5px 0px var(--black); }
 
-        .btn { 
-            width: 100%; 
-            padding: 15px; 
-            border: 4px solid var(--black); 
-            background: var(--yellow); 
-            color: #000;
-            font-weight: bold; 
-            cursor: pointer; 
-            box-shadow: 4px 4px 0px var(--black); 
-            font-size: 1rem;
-        }
+        .radar-box { background: #000; color: var(--lime); padding: 20px; font-size: 0.65rem; word-break: break-all; margin: 20px 0; border: 2px dashed var(--lime); text-align: center; cursor: copy; }
+        
+        .btn { width: 100%; padding: 15px; border: 4px solid var(--black); background: var(--yellow); color: #000; font-weight: bold; cursor: pointer; box-shadow: 4px 4px 0px var(--black); font-size: 0.9rem; margin-top: 10px; }
         .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--black); }
-        .btn-cancel { background: var(--red); color: white; display: none; margin-top: 15px; }
 
-        .status-area { min-height: 60px; display: flex; align-items: center; justify-content: center; flex-direction: column; margin-bottom: 10px; }
-        .status { font-size: 0.8rem; font-weight: bold; text-align: center; }
+        .status-area { min-height: 60px; display: flex; align-items: center; justify-content: center; text-align: center; margin-bottom: 10px; }
+        .status { font-size: 0.75rem; font-weight: bold; }
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
-        .history-container { margin-top: 20px; border-top: 4px solid var(--black); padding-top: 15px; text-align: left; }
-        .history-title { font-size: 0.7rem; margin-bottom: 10px; background: var(--lime); color: #000; display: inline-block; padding: 2px 5px; }
-        .history-item { font-family: monospace; font-size: 0.6rem; text-transform: none; border-bottom: 1px solid #333; padding: 8px 0; display: flex; justify-content: space-between; }
-        .win-tag { color: var(--lime); font-weight: bold; }
+        /* Modal / Help */
+        #help-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--bg); border: 4px solid var(--black); padding: 20px; max-width: 400px; text-align: left; }
 
-        .console-log { font-family: monospace; font-size: 0.5rem; color: #666; text-align: left; margin-top: 10px; text-transform: none; }
+        .history-container { margin-top: 20px; border-top: 4px solid var(--black); padding-top: 15px; }
+        .history-item { font-family: monospace; font-size: 0.55rem; border-bottom: 1px solid #333; padding: 5px 0; display: flex; justify-content: space-between; text-transform: none; }
     </style>
 </head>
 <body data-theme="light">
 
-<button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+<button class="theme-toggle" onclick="toggleTheme()">🌓 THEME</button>
 
 <div class="container">
     <div class="card active" id="view-home">
         <h1>DEGEN DUEL</h1>
-        <div class="subtitle">ARENA_v1.0.EXE</div>
+        <div class="subtitle">ARENA_v1.1_CONNECTIONLESS</div>
         
-        <div class="stake-option" onclick="watch('0.01')">
-            <span>0.01 ETH</span>
-            <span style="font-size: 0.5rem; opacity: 0.6;">ENTRY</span>
+        <div class="tracker-box">
+            <p style="font-size: 0.5rem; letter-spacing: 1px;">📡 TRACKING WALLET (REQUIRED):</p>
+            <input type="text" id="user-address-input" placeholder="0x..." autocomplete="off">
         </div>
-        <div class="stake-option" onclick="watch('0.05')">
-            <span>0.05 ETH</span>
-            <span style="font-size: 0.5rem; opacity: 0.6;">MID</span>
-        </div>
-        <div class="stake-option" onclick="watch('0.1')">
-            <span>0.10 ETH</span>
-            <span style="font-size: 0.5rem; opacity: 0.6;">WHALE</span>
-        </div>
-        
-        <p style="font-size: 0.5rem; text-align: center; margin-top: 10px;">3% HOUSE FEE APPLIED TO WINNER</p>
+
+        <div class="stake-option" onclick="watch('0.01')"><span>0.01 ETH</span><span style="font-size: 0.5rem; opacity: 0.5;">ENTRY</span></div>
+        <div class="stake-option" onclick="watch('0.05')"><span>0.05 ETH</span><span style="font-size: 0.5rem; opacity: 0.5;">MID</span></div>
+        <div class="stake-option" onclick="watch('0.1')"><span>0.10 ETH</span><span style="font-size: 0.5rem; opacity: 0.5;">WHALE</span></div>
     </div>
 
     <div class="card" id="view-radar">
         <h1 id="amt-display">0.00 ETH</h1>
-        <div class="subtitle">STATUS: RADAR_ONLINE</div>
+        <div class="subtitle">RADAR_TARGET_ACQUIRED</div>
         
-        <p style="font-size:0.6rem; margin-top: 10px;">SEND EXACT ETH TO CONTRACT:</p>
-        <div class="radar-box" onclick="copyAddr()">
-            0xF0bfEEEBEc3BEC4dA8388C00e50A337dd11b8B32
-        </div>
+        <div class="radar-box" onclick="copyAddr()">0xF0bfEEEBEc3BEC4dA8388C00e50A337dd11b8B32</div>
         
         <div class="status-area">
-            <div id="radar-status" class="status blink">INITIALIZING SENSORS...</div>
+            <div id="radar-status" class="status blink">INITIALIZING RADAR...</div>
         </div>
 
-        <div class="history-container">
-            <div class="history-title">RECENT_BATTLES</div>
-            <div id="activity-feed">
-                <div class="history-item">Scanning logs...</div>
-            </div>
-        </div>
+        <div id="result-container"></div>
 
-        <button id="cancel-btn" class="btn btn-cancel" onclick="requestCancel()">ABANDON & REFUND</button>
-        <button class="btn" style="background:transparent; color:var(--text); margin-top:10px;" onclick="location.reload()">← BACK</button>
+        <button class="btn" onclick="showHelp()" style="background: var(--red); color: white;">NEED A REFUND?</button>
+        <button class="btn" style="background:transparent; color:var(--text);" onclick="location.reload()">← BACK</button>
         
-        <div id="debug-log" class="console-log"></div>
+        <div class="history-container">
+            <div id="activity-feed"></div>
+        </div>
+    </div>
+</div>
+
+<div id="help-modal">
+    <div class="modal-content">
+        <h2 style="font-size: 1rem; margin-bottom: 10px;">MANUAL REFUND GUIDE</h2>
+        <p style="font-size: 0.65rem; line-height: 1.4; text-transform: none;">
+            Since you are not connected, you must trigger refunds manually:<br><br>
+            1. Go to <b>Sepolia Etherscan</b>.<br>
+            2. Go to <b>Contract</b> -> <b>Write Contract</b>.<br>
+            3. Connect your wallet to Etherscan.<br>
+            4. Find <b>cancelBet</b> and enter the amount in Wei.<br>
+            5. Submit transaction.
+        </p>
+        <button class="btn" onclick="closeHelp()">GOT IT</button>
     </div>
 </div>
 
 <script>
-    // --- THEME ENGINE ---
-    function toggleTheme() {
-        const current = document.body.getAttribute('data-theme');
-        const next = current === 'light' ? 'dark' : 'light';
-        document.body.setAttribute('data-theme', next);
-        localStorage.setItem('arena-theme', next);
-    }
-    // Load saved theme
-    const savedTheme = localStorage.getItem('arena-theme') || 'light';
-    document.body.setAttribute('data-theme', savedTheme);
-
-    // --- ARENA CORE ---
     const ADDR = "0xF0bfEEEBEc3BEC4dA8388C00e50A337dd11b8B32";
     const RPC = "https://ethereum-sepolia-rpc.publicnode.com"; 
     const provider = new ethers.providers.JsonRpcProvider(RPC);
     const abi = [
         "function pendingBets(uint256) view returns (address)",
-        "function lobby(uint256) view returns (address)",
         "function cancelBet(uint256 amount)",
         "event DuelResolved(address indexed winner, uint256 prize, uint256 fee)"
     ];
@@ -192,95 +119,88 @@
     let selectedWei = "0";
     let lobbyInterval;
 
-    function log(msg) {
-        const d = document.getElementById('debug-log');
-        if(d) d.innerText = "> " + msg;
+    // Theme Management
+    function toggleTheme() {
+        const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem('arena-theme', next);
     }
+    document.body.setAttribute('data-theme', localStorage.getItem('arena-theme') || 'light');
 
-    async function fetchHistory() {
-        const contract = new ethers.Contract(ADDR, abi, provider);
-        const feed = document.getElementById('activity-feed');
-        try {
-            const filter = contract.filters.DuelResolved();
-            const events = await contract.queryFilter(filter, -1000);
-            feed.innerHTML = ""; 
-            if(events.length === 0) {
-                feed.innerHTML = "<div class='history-item'>No recent duels found.</div>";
-                return;
-            }
-            events.reverse().slice(0, 3).forEach(event => {
-                addHistoryItem(event.args.winner, event.args.prize);
-            });
-        } catch (e) { feed.innerHTML = "<div class='history-item'>Logs offline.</div>"; }
-    }
-
-    function addHistoryItem(winner, prize) {
-        const feed = document.getElementById('activity-feed');
-        if(feed.innerText.includes("Scanning")) feed.innerHTML = "";
-        const item = document.createElement('div');
-        item.className = "history-item";
-        item.innerHTML = `<span>${winner.substring(0,6)}...</span><span class="win-tag">+${ethers.utils.formatEther(prize)} ETH</span>`;
-        if (feed.children.length >= 3) feed.removeChild(feed.lastChild);
-        feed.prepend(item);
-    }
+    // Persistence
+    window.onload = () => {
+        const saved = localStorage.getItem('tracked_addr');
+        if (saved) document.getElementById('user-address-input').value = saved;
+    };
 
     function watch(amt) {
+        const myAddr = document.getElementById('user-address-input').value.trim().toLowerCase();
+        if (!ethers.utils.isAddress(myAddr)) return alert("INVALID ETH ADDRESS.");
+        
+        localStorage.setItem('tracked_addr', myAddr);
         selectedWei = ethers.utils.parseEther(amt);
-        document.getElementById('amt-display').innerText = amt + " ETH DUEL";
+        
         document.getElementById('view-home').classList.remove('active');
         document.getElementById('view-radar').classList.add('active');
-        fetchHistory();
-        runRadar();
+        document.getElementById('amt-display').innerText = amt + " ETH DUEL";
+        
+        runRadar(myAddr);
     }
 
-    async function runRadar() {
+    async function runRadar(myAddr) {
         const status = document.getElementById('radar-status');
         const contract = new ethers.Contract(ADDR, abi, provider);
+
         const checkLobby = async () => {
             try {
-                let player = ethers.constants.AddressZero;
-                try { player = await contract.pendingBets(selectedWei); } 
-                catch(e) { try { player = await contract.lobby(selectedWei); } catch(e2) {} }
-
-                if (player && player !== ethers.constants.AddressZero) {
-                    status.innerText = "PLAYER DETECTED! WAITING...";
-                    status.style.color = "var(--text)";
-                    if (window.ethereum && window.ethereum.selectedAddress && player.toLowerCase() === window.ethereum.selectedAddress.toLowerCase()) {
-                        document.getElementById('cancel-btn').style.display = 'block';
-                    }
+                const player = (await contract.pendingBets(selectedWei)).toLowerCase();
+                if (player === myAddr) {
+                    status.innerText = "YOU ARE IN THE ARENA. WAITING FOR OPPONENT...";
+                    status.style.color = "var(--lime)";
+                } else if (player !== "0x0000000000000000000000000000000000000000") {
+                    status.innerText = "OPPONENT DETECTED! BATTLE IMMINENT...";
+                    status.style.color = "var(--yellow)";
                 } else {
-                    status.innerText = "LOBBY EMPTY: SEND ETH";
-                    status.style.color = "#666";
+                    status.innerText = "LOBBY EMPTY: SEND ETH TO ENTER";
+                    status.style.color = "#888";
                 }
-            } catch (err) { log("RPC Lag..."); }
+            } catch (e) {}
         };
+
         checkLobby();
         lobbyInterval = setInterval(checkLobby, 4000);
-        contract.on("DuelResolved", (winner, prize) => {
-            addHistoryItem(winner, prize);
-            alert("BATTLE OVER!\nWINNER: " + winner);
-            location.reload();
-        });
-    }
 
-    async function requestCancel() {
-        if(!window.ethereum) return alert("Connect MetaMask");
-        const browserProv = new ethers.providers.Web3Provider(window.ethereum);
-        await browserProv.send("eth_requestAccounts", []);
-        const contractWithSigner = new ethers.Contract(ADDR, abi, browserProv.getSigner());
-        try {
-            const tx = await contractWithSigner.cancelBet(selectedWei);
-            await tx.wait();
-            location.reload();
-        } catch(e) { alert("REFUND FAILED."); }
+        contract.on("DuelResolved", (winner, prize) => {
+            const winnerAddr = winner.toLowerCase();
+            const resultBox = document.getElementById('result-container');
+            
+            clearInterval(lobbyInterval);
+            document.getElementById('radar-status').style.display = 'none';
+            resultBox.innerHTML = ""; // Clear
+            
+            const card = document.createElement('div');
+            card.style.padding = "20px";
+            card.style.border = "4px solid var(--black)";
+            card.style.marginTop = "10px";
+
+            if (winnerAddr === myAddr) {
+                card.style.background = "var(--lime)";
+                card.innerHTML = `<h2 style="color:#000;">VICTORY</h2><p style="color:#000; font-size:0.6rem; margin:5px 0;">YOU WIN! CHECK WALLET FOR WINNINGS.</p>`;
+            } else {
+                card.style.background = "var(--red)";
+                card.innerHTML = `<h2 style="color:#fff;">DEFEATED</h2><p style="color:#fff; font-size:0.6rem; margin:5px 0;">YOU LOST THIS TIME BUT YOU CAN TRY AGAIN.</p>`;
+            }
+            resultBox.appendChild(card);
+        });
     }
 
     function copyAddr() {
         navigator.clipboard.writeText(ADDR);
-        const original = document.getElementById('radar-status').innerText;
-        document.getElementById('radar-status').innerText = "COPIED!";
-        setTimeout(() => { document.getElementById('radar-status').innerText = original; }, 2000);
+        alert("COPIED");
     }
+
+    function showHelp() { document.getElementById('help-modal').style.display = 'flex'; }
+    function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
 </script>
 </body>
 </html>
