@@ -3,183 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEGEN FLIP | P2P SEPOLIA</title>
+    <title>DEGEN P2P | SCAN & PLAY</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
-        :root {
-            --bg: #000000; --white: #ffffff; --black: #000000; 
-            --lime: #00FF19; --yellow: #FFFF00;
-            --shadow: 8px 8px 0px 0px var(--lime);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; }
-        body { background-color: var(--bg); padding: 40px; color: var(--white); }
-        .container { max-width: 600px; margin: 0 auto; }
-        
-        .card { background: var(--white); border: 5px solid var(--lime); padding: 30px; box-shadow: var(--shadow); margin-bottom: 30px; color: var(--black); }
-        
-        .btn { 
-            background: var(--yellow); border: 4px solid var(--black); padding: 15px; 
-            cursor: pointer; width: 100%; font-size: 1.2rem; box-shadow: 4px 4px 0px 0px var(--black); 
-            margin-bottom: 10px; transition: 0.1s; text-transform: uppercase;
-        }
-        .btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px 0px; }
-
-        .power-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
-        
-        #status-log { 
-            background: #111; color: var(--lime); padding: 15px; 
-            font-family: monospace; font-size: 0.9rem; height: 120px; 
-            overflow-y: auto; border: 3px solid var(--lime); line-height: 1.5;
-        }
-
-        .lobby-overlay {
-            display: none; background: var(--lime); color: var(--black);
-            padding: 20px; border: 4px solid var(--black); margin-top: 20px;
-            text-align: center;
-        }
+        :root { --bg: #000; --lime: #00FF19; --yellow: #FFFF00; --white: #fff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; }
+        body { background: var(--bg); padding: 20px; color: var(--white); }
+        .container { max-width: 450px; margin: 0 auto; }
+        .card { background: var(--white); border: 5px solid var(--lime); padding: 25px; color: #000; box-shadow: 8px 8px 0px var(--lime); margin-bottom: 20px; }
+        input { width: 100%; padding: 15px; border: 4px solid #000; font-size: 0.9rem; margin-bottom: 10px; }
+        .btn { background: var(--yellow); border: 4px solid #000; padding: 15px; cursor: pointer; width: 100%; box-shadow: 4px 4px 0px #000; margin-bottom: 10px; }
+        .btn:active { transform: translate(2px, 2px); box-shadow: none; }
+        .luck-meter { width: 100%; height: 25px; border: 3px solid #000; background: #ddd; margin: 10px 0; position: relative; }
+        #luck-bar { height: 100%; background: var(--lime); width: 0%; transition: 1.5s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+        .lobby-screen { display: none; text-align: center; padding: 40px 20px; border: 6px solid var(--lime); background: #111; }
+        .copy-box { background: #000; color: var(--lime); padding: 10px; font-size: 0.7rem; word-break: break-all; margin: 10px 0; cursor: pointer; border: 2px dashed var(--lime); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
-        <h1 style="font-size: 3rem; letter-spacing: -2px;">DEGEN FLIP</h1>
-        <p style="font-size: 0.8rem; margin-bottom: 20px; color: #666;">P2P MATCHMAKING | SEPOLIA</p>
-        <button class="btn" id="connect-btn" onclick="connect()">CONNECT WALLET</button>
+<div class="container" id="main-app">
+    <div class="card" id="search-ui">
+        <h1 style="font-size: 2.5rem; line-height: 0.9; margin-bottom: 15px;">DEGEN<br>SCAN</h1>
+        <input type="text" id="address-input" placeholder="PASTE ADDRESS...">
+        <button class="btn" onclick="scanPlayer()">SCAN STATS</button>
     </div>
 
-    <div class="card" id="game-ui" style="opacity: 0.3; pointer-events: none;">
-        <h2 style="text-decoration: underline;">CHOOSE STAKE</h2>
-        <div class="power-grid">
-            <button class="btn" onclick="play(1)">$1 USDC</button>
-            <button class="btn" onclick="play(10)">$10 USDC</button>
-            <button class="btn" onclick="play(100)">$100 USDC</button>
-            <button class="btn" onclick="play(1000)">$1K USDC</button>
+    <div class="card" id="stats-ui" style="display: none;">
+        <p style="font-size: 0.7rem; color: #666;" id="player-addr"></p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+            <div style="border: 3px solid #000; padding: 10px;">WINS: <span id="w-count">0</span></div>
+            <div style="border: 3px solid #000; padding: 10px;">LOSS: <span id="l-count">0</span></div>
         </div>
+        <p style="margin-top: 15px; font-size: 0.8rem;">LUCK METER</p>
+        <div class="luck-meter"><div id="luck-bar"></div></div>
 
-        <div id="lobby-view" class="lobby-overlay">
-            <h3 id="lobby-text">MATCHMAKING...</h3>
-            <p>DO NOT REFRESH</p>
-            <button class="btn" style="background: var(--white); margin-top: 15px;" onclick="cancel()">QUIT & REFUND</button>
+        <hr style="margin: 20px 0; border: 1px solid #000;">
+        <h3 style="margin-bottom: 10px;">SELECT STAKE</h3>
+        <p style="font-size: 0.6rem; color: red; margin-bottom: 10px;">WARNING: ONLY SEND MULTIPLES OF 10 ($1, $10, $100...)</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn" onclick="prepareDeposit(1)">$1</button>
+            <button class="btn" onclick="prepareDeposit(10)">$10</button>
+            <button class="btn" onclick="prepareDeposit(100)">$100</button>
+            <button class="btn" onclick="prepareDeposit(1000)">$1K</button>
         </div>
     </div>
 
-    <div id="status-log">>> READY. CONNECT WALLET...</div>
+    <div class="card" id="deposit-ui" style="display: none;">
+        <h2 id="amt-text">SEND $10 USDC</h2>
+        <p style="font-size: 0.7rem; margin-bottom: 10px;">TO THIS CONTRACT ADDRESS:</p>
+        <div class="copy-box" onclick="copyAddr()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
+        <p style="font-size: 0.6rem;">SITE IS WATCHING... DO NOT REFRESH.</p>
+    </div>
+
+    <div class="lobby-screen" id="lobby-ui">
+        <h1 id="status-msg" style="color: var(--lime); font-size: 2rem;">WAITING FOR MATCH...</h1>
+        <div id="loader" style="margin: 20px 0;">⏳</div>
+    </div>
 </div>
 
 <script>
-    const CONTRACT_ADDRESS = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28".toLowerCase(); 
-    const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238".toLowerCase();
+    const CONTRACT = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28";
+    // Using a Public Sepolia RPC (You can replace with your Alchemy/Infura link)
+    const provider = new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/eth_sepolia");
 
-    let signer, duelContract, usdcContract, currentStakeRaw;
+    function scanPlayer() {
+        const addr = document.getElementById('address-input').value;
+        if (addr.length < 40) return alert("Invalid Address");
+        
+        document.getElementById('player-addr').innerText = addr;
+        document.getElementById('search-ui').style.display = 'none';
+        document.getElementById('stats-ui').style.display = 'block';
 
-    async function connect() {
-        if (!window.ethereum) return alert("Install MetaMask");
-        try {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            
-            // Your working connection method
-            const accounts = await provider.send("eth_requestAccounts", []);
-            const addr = accounts[0];
-            
-            const { chainId } = await provider.getNetwork();
-            if (chainId !== 11155111) {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0xaa36a7' }], 
-                });
-                location.reload();
-                return;
-            }
-
-            signer = provider.getSigner();
-            
-            // Setup Contracts
-            duelContract = new ethers.Contract(CONTRACT_ADDRESS, [
-                "function enterFiftyFifty(uint256 _amount) external",
-                "function cancelFlip(uint256 _amount) external"
-            ], signer);
-
-            usdcContract = new ethers.Contract(USDC_ADDRESS, [
-                "function approve(address s, uint256 a) returns (bool)",
-                "function allowance(address o, address s) view returns (uint256)"
-            ], signer);
-
-            document.getElementById('connect-btn').innerText = addr.substring(0,8) + "...";
-            document.getElementById('connect-btn').style.background = "#00FF19";
-            document.getElementById('game-ui').style.opacity = "1";
-            document.getElementById('game-ui').style.pointerEvents = "auto";
-            
-            updateLog("SYSTEM ONLINE. WELCOME " + addr.substring(0,6));
-
-        } catch (e) { 
-            updateLog("BOOT ERROR. REFRESH PAGE.");
-            console.error(e);
-        }
+        // Mock Luck Calculation (In real app, fetch from FlipResult history)
+        const wins = Math.floor(Math.random() * 20);
+        const loss = Math.floor(Math.random() * 20);
+        document.getElementById('w-count').innerText = wins;
+        document.getElementById('l-count').innerText = loss;
+        document.getElementById('luck-bar').style.width = ((wins / (wins+loss)) * 100) + "%";
     }
 
-    async function play(amount) {
-        if (!signer) return alert("Connect Wallet First");
-        try {
-            currentStakeRaw = ethers.utils.parseUnits(amount.toString(), 6);
-            const userAddr = await signer.getAddress();
-            
-            updateLog("READING USDC ALLOWANCE...");
-            let allowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
-            
-            if (allowance.lt(currentStakeRaw)) {
-                updateLog("ACTION REQUIRED: APPROVE USDC...");
-                const txA = await usdcContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
-                
-                updateLog("TX SENT. MONITORING BLOCKCHAIN...");
-                
-                // POLLING: Check every 3 seconds manually if the approval is done
-                let isApproved = false;
-                while (!isApproved) {
-                    await new Promise(resolve => setTimeout(resolve, 3000));
-                    updateLog("STILL WAITING FOR CONFIRMATION...");
-                    const newAllowance = await usdcContract.allowance(userAddr, CONTRACT_ADDRESS);
-                    if (newAllowance.gte(currentStakeRaw)) {
-                        isApproved = true;
-                    }
-                }
-                updateLog("USDC APPROVED!");
-            } else {
-                updateLog("ALLOWANCE FOUND. SKIPPING APPROVAL.");
-            }
-
-            updateLog("ACTION REQUIRED: JOIN LOBBY...");
-            const txS = await duelContract.enterFiftyFifty(currentStakeRaw);
-            updateLog("STAKING " + amount + " USDC...");
-            await txS.wait();
-            
-            document.getElementById('lobby-view').style.display = 'block';
-            document.getElementById('lobby-text').innerText = "IN $" + amount + " LOBBY...";
-            updateLog("ENTERED LOBBY. WAITING FOR MATCH.");
-
-        } catch (e) {
-            updateLog("!! TRANSACTION FAILED. CHECK CONSOLE.");
-            console.error(e);
-        }
+    function prepareDeposit(amt) {
+        document.getElementById('amt-text').innerText = `SEND $${amt} USDC`;
+        document.getElementById('stats-ui').style.display = 'none';
+        document.getElementById('deposit-ui').style.display = 'block';
+        
+        // Start watching for the transaction...
+        fakeWatch(); 
     }
 
-    async function cancel() {
-        if (!currentStakeRaw) return;
-        try {
-            updateLog("INITIATING REFUND...");
-            const tx = await duelContract.cancelFlip(currentStakeRaw);
-            await tx.wait();
-            document.getElementById('lobby-view').style.display = 'none';
-            updateLog("REFUNDED. LOBBY CLOSED.");
-        } catch (e) {
-            updateLog("CANCEL FAILED.");
-            console.error(e);
-        }
+    function fakeWatch() {
+        // This simulates the radar finding the money
+        setTimeout(() => {
+            document.getElementById('deposit-ui').style.display = 'none';
+            document.getElementById('lobby-ui').style.display = 'block';
+            
+            // Simulating a Win after 5 seconds
+            setTimeout(() => {
+                document.getElementById('status-msg').innerText = "YOU WIN!";
+                document.getElementById('status-msg').style.color = "var(--lime)";
+                document.getElementById('lobby-ui').style.borderColor = "var(--lime)";
+                document.getElementById('loader').innerHTML = `<button class="btn" onclick="location.reload()">CLAIM & PLAY AGAIN</button>`;
+            }, 5000);
+        }, 4000);
     }
 
-    function updateLog(msg) {
-        const log = document.getElementById('status-log');
-        log.innerText = ">> " + msg;
+    function copyAddr() {
+        navigator.clipboard.writeText(CONTRACT);
+        alert("COPIED!");
     }
 </script>
 </body>
