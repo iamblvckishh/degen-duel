@@ -11,182 +11,167 @@
             --lime: #00FF19; --blood: #FF4500; --gold: #FFFF00;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; text-transform: uppercase; }
-        
         body { 
-            background: var(--bg); color: white; 
-            height: 100vh; display: flex; align-items: center; justify-content: center;
-            overflow: hidden; background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-            background-size: 30px 30px;
+            background: var(--bg); color: white; height: 100vh; 
+            display: flex; align-items: center; justify-content: center;
+            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px); background-size: 30px 30px;
         }
-
-        .arena-wrapper { width: 100%; max-width: 480px; padding: 20px; z-index: 10; }
-
-        /* Gladiator Panels */
+        .arena-wrapper { width: 100%; max-width: 480px; padding: 20px; }
         .panel { 
-            background: var(--stone); border: 3px solid var(--iron); 
-            padding: 30px; position: relative; box-shadow: 15px 15px 0px #000;
-            display: none; animation: slideIn 0.4s ease-out;
+            background: var(--stone); border: 3px solid var(--iron); padding: 30px; 
+            box-shadow: 15px 15px 0px #000; display: none; animation: slideIn 0.3s ease-out;
         }
         .panel.active { display: block; }
+        @keyframes slideIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        @keyframes slideIn {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        h1 { font-size: 2rem; color: var(--gold); text-align: center; margin-bottom: 20px; }
+        .stake-row { display: flex; justify-content: space-between; align-items: center; background: #000; padding: 15px; border: 1px solid var(--iron); margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .stake-row:hover { border-color: var(--lime); transform: translateX(5px); }
+        .waiting-tag { font-size: 0.7rem; color: var(--lime); }
 
-        h1 { font-size: 2.5rem; color: var(--gold); text-shadow: 3px 3px 0px #000; margin-bottom: 20px; text-align: center; }
-        
-        input { 
-            width: 100%; background: #000; border: 2px solid var(--iron); 
-            padding: 18px; color: var(--lime); font-size: 1rem; margin-bottom: 15px; outline: none;
-            transition: 0.3s;
-        }
-        input:focus { border-color: var(--lime); box-shadow: 0 0 10px rgba(0,255,25,0.2); }
-
-        .btn { 
-            width: 100%; padding: 18px; border: none; cursor: pointer;
-            font-weight: bold; font-size: 1.1rem; transition: 0.1s;
-            margin-bottom: 12px; box-shadow: 5px 5px 0px #000;
-            display: flex; align-items: center; justify-content: center;
-        }
+        input { width: 100%; background: #000; border: 2px solid var(--iron); padding: 15px; color: var(--lime); margin-bottom: 15px; outline: none; }
+        .btn { width: 100%; padding: 18px; border: none; cursor: pointer; font-weight: bold; margin-bottom: 10px; box-shadow: 5px 5px 0px #000; }
         .btn-gold { background: var(--gold); color: #000; }
-        .btn-gold:hover { background: #fff; transform: scale(1.02); }
-        
         .btn-outline { background: transparent; border: 2px solid var(--iron); color: white; }
-        .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+        .btn-retreat { background: transparent; color: #666; font-size: 0.7rem; border: none; margin-top: 10px; width: 100%; }
 
-        .btn-retreat { 
-            background: transparent; color: #666; font-size: 0.7rem; 
-            box-shadow: none; border: 1px solid transparent; margin-top: 10px;
-        }
-        .btn-retreat:hover { color: var(--blood); text-decoration: underline; }
-
-        .btn:active { transform: translate(3px, 3px); box-shadow: none; }
-
-        /* Stats Branding */
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .stat-card { background: #000; border: 1px solid var(--iron); padding: 15px; text-align: center; }
-        
-        .luck-meter { height: 12px; background: #000; border: 1px solid var(--iron); margin-top: 10px; overflow: hidden; }
-        #luck-bar { height: 100%; background: linear-gradient(90deg, var(--blood), var(--lime)); width: 0%; transition: 2s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
-
-        .warning-text { font-size: 0.7rem; color: var(--blood); margin-bottom: 15px; text-align: center; line-height: 1.4; font-style: italic; }
-        
-        .copy-area { background: #000; padding: 15px; border: 2px dashed var(--iron); color: var(--lime); font-size: 0.7rem; cursor: pointer; margin: 20px 0; text-align: center; }
-        .copy-area:hover { border-color: var(--lime); }
-
-        .radar { animation: pulse-lime 1.5s infinite; }
-        @keyframes pulse-lime { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        /* Profile Modal */
+        #profile-btn { position: fixed; top: 20px; right: 20px; background: var(--gold); color: #000; padding: 10px; font-size: 0.7rem; cursor: pointer; border: 2px solid #000; display: none; }
+        .luck-meter { height: 10px; background: #000; border: 1px solid var(--iron); margin: 10px 0; }
+        #luck-bar { height: 100%; background: var(--lime); width: 0%; transition: 1s; }
+        .radar { animation: pulse 1.5s infinite; color: var(--lime); font-size: 0.7rem; text-align: center; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
 
-<div class="arena-wrapper">
-    
-    <div class="panel active" id="p-entrance">
-        <h1>DEGEN DUEL</h1>
-        <p style="font-size: 0.8rem; text-align: center; color: #888; margin-bottom: 25px;">[ IDENTIFY YOURSELF ]</p>
-        <input type="text" id="wallet-input" placeholder="0x... OR ENS NAME">
-        <button class="btn btn-gold" onclick="navTo('p-stats', enterArena)">LET'S DUEL</button>
-    </div>
+    <div id="profile-btn" onclick="toggleProfile()">[ PROFILE ]</div>
 
-    <div class="panel" id="p-stats">
-        <h2 id="addr-display" style="font-size: 0.7rem; color: var(--gold); margin-bottom: 10px; text-align: center;"></h2>
-        <div class="stat-grid">
-            <div class="stat-card">VICTORIES<br><span id="wins" style="color: var(--lime); font-size: 1.5rem;">0</span></div>
-            <div class="stat-card">DEFEATS<br><span id="losses" style="color: var(--blood); font-size: 1.5rem;">0</span></div>
-        </div>
-        <p style="font-size: 0.7rem;">LUCK MAGNITUDE</p>
-        <div class="luck-meter"><div id="luck-bar"></div></div>
-
-        <div style="margin: 30px 0 15px 0;">
-            <p style="font-size: 0.8rem; text-align: center; margin-bottom: 15px;">SELECT YOUR SACRIFICE</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn btn-outline" onclick="selectStake(1)">$1 USDC</button>
-                <button class="btn btn-outline" onclick="selectStake(10)">$10 USDC</button>
-                <button class="btn btn-outline" onclick="selectStake(100)">$100 USDC</button>
-                <button class="btn btn-outline" onclick="selectStake(1000)">$1K USDC</button>
+    <div class="arena-wrapper">
+        <div class="panel active" id="p-home">
+            <h1>CHOOSE STAKE</h1>
+            <div class="stake-row" onclick="pickStake(1)">
+                <span>$1 USDC</span> <span class="waiting-tag">3 WARRIORS WAITING</span>
+            </div>
+            <div class="stake-row" onclick="pickStake(10)">
+                <span>$10 USDC</span> <span class="waiting-tag">1 WARRIOR WAITING</span>
+            </div>
+            <div class="stake-row" onclick="pickStake(100)">
+                <span>$100 USDC</span> <span class="waiting-tag">0 WAITING</span>
+            </div>
+            <div class="stake-row" onclick="pickStake(1000)">
+                <span>$1K USDC</span> <span class="waiting-tag">READY TO DUEL</span>
             </div>
         </div>
-        <button class="btn btn-retreat" onclick="navTo('p-entrance')">← RETREAT TO SHADOWS</button>
-    </div>
 
-    <div class="panel" id="p-deposit">
-        <h2 id="offer-text" style="text-align: center; color: var(--gold);">OFFER $10 USDC</h2>
-        <p class="warning-text">MUST BE MULTIPLE OF 10. <br> OTHERS WILL BE LOST TO THE VOID.</p>
-        <p style="font-size: 0.7rem; text-align: center; margin-top: 10px;">SEND TO THE ARENA CONTRACT:</p>
-        <div class="copy-area" onclick="copyText()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
-        <div class="radar" style="text-align: center; font-size: 0.7rem; color: var(--lime);">[ ARENA RADAR SCANNING BLOCKCHAIN... ]</div>
-        <button class="btn btn-retreat" onclick="navTo('p-stats')">← CHANGE OFFERING</button>
-    </div>
+        <div class="panel" id="p-login">
+            <h1>ARENA LOGIN</h1>
+            <p style="font-size: 0.7rem; color: #888; margin-bottom: 15px; text-align: center;">PASTE ADDRESS OR ENS TO ENTER</p>
+            <input type="text" id="login-input" placeholder="0x... OR .eth">
+            <button class="btn btn-gold" onclick="doLogin()">ENTER ARENA</button>
+            <button class="btn btn-retreat" onclick="navTo('p-home')">← BACK TO STAKES</button>
+        </div>
 
-    <div class="panel" id="p-lobby">
-        <h1 id="combat-status" style="font-size: 1.8rem;">IN LOBBY</h1>
-        <div id="combat-ui" style="text-align: center;">
-            <p style="font-size: 0.8rem; margin: 20px 0;">WAITING FOR CHALLENGER...</p>
-            <div style="font-size: 3rem; margin: 30px 0;" class="radar">⚔️</div>
-            <p style="font-size: 0.6rem; color: #555;">ONCE IN THE ARENA, THERE IS NO RETREAT.</p>
+        <div class="panel" id="p-wallet-select">
+            <h1>SENDING FROM?</h1>
+            <button class="btn btn-gold" id="btn-use-login" onclick="setSender('login')">USE LOGGED IN WALLET</button>
+            <p style="text-align: center; font-size: 0.7rem; margin: 10px 0;">-- OR PASTE DIFFERENT SENDER --</p>
+            <input type="text" id="alt-sender" placeholder="PASTE SENDER ADDRESS">
+            <button class="btn btn-outline" onclick="setSender('alt')">USE THIS ADDRESS</button>
+            <button class="btn btn-retreat" onclick="navTo('p-login')">← BACK</button>
+        </div>
+
+        <div class="panel" id="p-reveal">
+            <h1 id="reveal-amt">$0 USDC DUEL</h1>
+            <p style="font-size: 0.7rem; text-align: center;">SEND EXACT AMOUNT FROM:<br><b id="sender-display" style="color:var(--gold)"></b></p>
+            <p style="font-size: 0.7rem; text-align: center; margin-top: 15px;">TO ARENA CONTRACT:</p>
+            <div style="background:#000; padding:15px; color:var(--lime); font-size:0.6rem; border:1px dashed var(--lime); margin:10px 0; word-break:break-all; cursor:pointer;" onclick="copyAddr()">0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28</div>
+            <div class="radar">RADAR SCANNING FOR YOUR TRANSFER...</div>
+            <button class="btn btn-retreat" onclick="navTo('p-wallet-select')">← CHANGE WALLET</button>
+        </div>
+
+        <div class="panel" id="p-profile" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;">
+            <h1>COMBAT RECORD</h1>
+            <p id="prof-addr" style="font-size: 0.6rem; text-align: center; color: var(--gold);"></p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0;">
+                <div style="border:1px solid var(--iron); padding:10px; text-align:center;">WINS<br><span id="prof-wins" style="color:var(--lime)">0</span></div>
+                <div style="border:1px solid var(--iron); padding:10px; text-align:center;">LOSS<br><span id="prof-loss" style="color:var(--blood)">0</span></div>
+            </div>
+            <p style="font-size:0.7rem;">LUCK METER</p>
+            <div class="luck-meter"><div id="luck-bar"></div></div>
+            <button class="btn btn-gold" style="margin-top:20px;" onclick="toggleProfile()">RETURN TO ARENA</button>
         </div>
     </div>
 
-</div>
-
 <script>
+    const MAINNET_RPC = "https://rpc.ankr.com/eth";
+    const SEPOLIA_RPC = "https://rpc.ankr.com/eth_sepolia";
     const CONTRACT = "0xFfa785f3D1DA528daDC56Ad899BA3c4A136FDF28";
-    let currentPlayer = "";
+    
+    let selectedStake = 0;
+    let loginAddress = "";
+    let senderAddress = "";
 
-    function navTo(panelId, callback) {
+    function navTo(id) {
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        document.getElementById(panelId).classList.add('active');
-        if (callback) callback();
+        document.getElementById(id).classList.add('active');
     }
 
-    function enterArena() {
-        currentPlayer = document.getElementById('wallet-input').value;
-        document.getElementById('addr-display').innerText = currentPlayer;
+    function pickStake(amt) {
+        selectedStake = amt;
+        navTo('p-login');
+    }
+
+    async function doLogin() {
+        const input = document.getElementById('login-input').value.trim();
+        if(!input) return;
         
-        // Visual interactivity for Luck Meter
-        const w = Math.floor(Math.random() * 20);
-        const l = Math.floor(Math.random() * 20);
-        document.getElementById('wins').innerText = w;
-        document.getElementById('losses').innerText = l;
-        setTimeout(() => {
-            document.getElementById('luck-bar').style.width = ((w / (w + l)) * 100 || 50) + "%";
-        }, 500);
-    }
-
-    function selectStake(amt) {
-        document.getElementById('offer-text').innerText = `OFFER $${amt} USDC`;
-        navTo('p-deposit');
-        
-        // Mocking the detection for now
-        setTimeout(() => {
-            navTo('p-lobby');
-            simulateCombat();
-        }, 4000);
-    }
-
-    function simulateCombat() {
-        setTimeout(() => {
-            const won = Math.random() > 0.5;
-            const status = document.getElementById('combat-status');
-            const ui = document.getElementById('combat-ui');
-            
-            if (won) {
-                status.innerText = "VICTORY";
-                status.style.color = "var(--lime)";
-                ui.innerHTML = `<p>YOU HAVE SLAIN THE OPPONENT.</p><button class="btn btn-gold" style="margin-top:20px;" onclick="location.reload()">CLAIM BOUNTY</button>`;
+        try {
+            const provider = new ethers.providers.JsonRpcProvider(MAINNET_RPC);
+            if (input.includes('.')) {
+                loginAddress = await provider.resolveName(input);
             } else {
-                status.innerText = "DEFEATED";
-                status.style.color = "var(--blood)";
-                ui.innerHTML = `<p>YOUR SOUL HAS BEEN CONSUMED.</p><button class="btn btn-outline" style="margin-top:20px;" onclick="location.reload()">TRY AGAIN</button>`;
+                loginAddress = input;
             }
-        }, 5000);
+            
+            if (!ethers.utils.isAddress(loginAddress)) throw new Error("Invalid");
+            
+            document.getElementById('btn-use-login').innerText = `USE ${loginAddress.substring(0,6)}...`;
+            document.getElementById('profile-btn').style.display = 'block';
+            navTo('p-wallet-select');
+        } catch(e) { alert("Identity not found in the records."); }
     }
 
-    function copyText() {
+    function setSender(type) {
+        if (type === 'login') {
+            senderAddress = loginAddress;
+        } else {
+            senderAddress = document.getElementById('alt-sender').value.trim();
+            if(!ethers.utils.isAddress(senderAddress)) return alert("Invalid Address");
+        }
+        
+        document.getElementById('reveal-amt').innerText = `$${selectedStake} DUEL`;
+        document.getElementById('sender-display').innerText = senderAddress;
+        navTo('p-reveal');
+        // startRadar(senderAddress, selectedStake); // Your actual ethers code
+    }
+
+    function toggleProfile() {
+        const prof = document.getElementById('p-profile');
+        if(prof.classList.contains('active')) {
+            prof.classList.remove('active');
+        } else {
+            document.getElementById('prof-addr').innerText = loginAddress;
+            document.getElementById('prof-wins').innerText = Math.floor(Math.random()*10);
+            document.getElementById('prof-loss').innerText = Math.floor(Math.random()*10);
+            document.getElementById('luck-bar').style.width = "65%";
+            prof.classList.add('active');
+        }
+    }
+
+    function copyAddr() {
         navigator.clipboard.writeText(CONTRACT);
-        alert("CONTRACT COPIED. SEND USDC NOW.");
+        alert("COPIED!");
     }
 </script>
 </body>
