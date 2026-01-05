@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>DEGEN DUEL | ARENA</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
@@ -28,18 +28,22 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; transition: background 0.2s, color 0.1s; }
         body { background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
         
-        .theme-toggle {
+        /* Control Bar for Theme & Mute */
+        .controls {
             position: fixed;
             top: 20px;
             right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        .ctrl-btn {
             background: var(--card-bg);
             border: 3px solid var(--black);
             padding: 10px;
             cursor: pointer;
-            font-size: 0.7rem;
-            font-weight: bold;
+            font-size: 0.8rem;
             box-shadow: 4px 4px 0px var(--black);
-            z-index: 100;
         }
 
         .container { width: 100%; max-width: 400px; }
@@ -57,7 +61,18 @@
         .subtitle { font-size: 0.6rem; margin-bottom: 20px; background: var(--black); color: var(--bg); display: inline-block; padding: 2px 5px; }
         
         .tracker-box { margin-bottom: 20px; border: 4px dashed var(--black); padding: 15px; background: rgba(0,255,25,0.05); }
-        .tracker-box input { width: 100%; padding: 12px; border: 3px solid var(--black); background: var(--bg); color: var(--text); font-family: monospace; font-size: 0.7rem; outline: none; margin-top: 8px; }
+        /* FIXED: Font-size set to 16px to prevent iOS/Android auto-zoom */
+        .tracker-box input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 3px solid var(--black); 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: monospace; 
+            font-size: 16px; 
+            outline: none; 
+            margin-top: 8px; 
+        }
 
         .stake-option { 
             display: flex; 
@@ -77,7 +92,6 @@
             box-shadow: 5px 5px 0px var(--black); 
         }
 
-        /* Heat Map Styling */
         .stake-option.hot { border-color: var(--lime); box-shadow: 0 0 15px var(--lime); }
         .hot-tag { background: var(--lime); color: black; font-size: 0.5rem; padding: 2px 4px; position: absolute; top: -10px; right: 10px; display: none; }
         .stake-option.hot .hot-tag { display: block; }
@@ -137,7 +151,10 @@
 </head>
 <body data-theme="light">
 
-<button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+<div class="controls">
+    <button class="ctrl-btn" id="mute-toggle" onclick="toggleMute()">🔊</button>
+    <button class="ctrl-btn" onclick="toggleTheme()">🌓</button>
+</div>
 
 <div class="container">
     <div class="card active" id="view-home">
@@ -212,8 +229,19 @@
     // --- SOUND ENGINE ---
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     const ctx = new AudioCtx();
+    let isMuted = localStorage.getItem('arena-mute') === 'true';
+
+    function toggleMute() {
+        isMuted = !isMuted;
+        localStorage.setItem('arena-mute', isMuted);
+        document.getElementById('mute-toggle').innerText = isMuted ? '🔇' : '🔊';
+    }
+
+    // Initialize Mute Button State
+    document.getElementById('mute-toggle').innerText = isMuted ? '🔇' : '🔊';
 
     function playSound(type) {
+        if (isMuted) return;
         if (ctx.state === 'suspended') ctx.resume();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -277,7 +305,6 @@
         runHeatMap();
     };
 
-    // --- HEAT MAP LOGIC ---
     async function runHeatMap() {
         const contract = new ethers.Contract(ADDR, abi, provider);
         const tiers = [
